@@ -1,0 +1,8 @@
+model Doctor {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  specialty String?
+  bio       String?
+
+  user User @relation(fields: [userId], references: [id])
+}
