@@ -1,9 +1,18 @@
-import { IsDateString } from 'class-validator';
+import { IsDateString, IsInt, IsOptional, Min } from 'class-validator';
 
-export class CreateSlotDto {
+export class CreateSlotsDto {
   @IsDateString()
-  startTime!: string;
+  from!: string;
 
   @IsDateString()
-  endTime!: string;
+  to!: string;
+
+  @IsInt()
+  @Min(5)
+  slotMinutes!: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  breakMinutes?: number;
 }
