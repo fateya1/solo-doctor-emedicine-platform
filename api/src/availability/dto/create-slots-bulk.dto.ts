@@ -1,10 +1,10 @@
-import { ValidateNested, ArrayMinSize } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsArray, ValidateNested } from 'class-validator';
 import { CreateSlotDto } from './create-slot.dto';
 
 export class CreateSlotsBulkDto {
+  @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateSlotDto)
-  @ArrayMinSize(1)
-  slots: CreateSlotDto[];
+  slots!: CreateSlotDto[];
 }
