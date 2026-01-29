@@ -1,19 +1,21 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { BookSlotDto } from './dto/book-slot.dto';
+import { AppointmentStatus } from '@prisma/client';
 
 @Injectable()
 export class AppointmentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async bookSlot(patientId: string, dto: BookSlotDto) {
     return this.prisma.$transaction(async (tx) => {
       const slot = await tx.availabilitySlot.findUnique({
         where: { id: dto.slotId },
+        include: { appointment: true }, // IMPORTANT for "already booked" check
       });
 
-      if (!slot) throw new BadRequestException('Slot not found');
-      if (slot.bookedAppointmentId) throw new BadRequestException('Slot already booked');
+      if (!slot) throw new NotFoundException('Slot not found');
+      if (slot.appointment) throw new BadRequestException('Slot already booked');
 
       const appt = await tx.appointment.create({
         data: {
@@ -21,17 +23,13 @@ export class AppointmentsService {
           patientId,
           startTime: slot.startTime,
           endTime: slot.endTime,
-          reason: dto.reason,
-          status: 'confirmed',
-          slotId: slot.id,
+          reason: dto.reason ?? null,
+          status: AppointmentStatus.CONFIRMED,
+          slotId: slot.id, // booking happens here
         },
       });
 
-      await tx.availabilitySlot.update({
-        where: { id: slot.id },
-        data: { bookedAppointmentId: appt.id },
-      });
-
+      // No slot update needed — the unique slotId on Appointment prevents double booking
       return appt;
     });
   }

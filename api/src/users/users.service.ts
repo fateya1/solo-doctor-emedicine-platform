@@ -1,7 +1,7 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserRole } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -14,20 +14,23 @@ export class UsersService {
     role: UserRole;
   }) {
     const email = params.email.toLowerCase().trim();
+    const fullName = params.fullName.trim();
 
     const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) throw new ConflictException('Email already exists');
 
     const passwordHash = await bcrypt.hash(params.password, 10);
 
-    const user = await this.prisma.user.create({
+    return this.prisma.user.create({
       data: {
         email,
         passwordHash,
-        fullName: params.fullName.trim(),
+        fullName,
         role: params.role,
-        doctorProfile: params.role === 'doctor' ? { create: {} } : undefined,
-        patientProfile: params.role === 'patient' ? { create: {} } : undefined,
+
+        // Create the correct profile based on enum value
+        doctorProfile: params.role === UserRole.DOCTOR ? { create: {} } : undefined,
+        patientProfile: params.role === UserRole.PATIENT ? { create: {} } : undefined,
       },
       select: {
         id: true,
@@ -38,8 +41,6 @@ export class UsersService {
         updatedAt: true,
       },
     });
-
-    return user;
   }
 
   async findByEmail(email: string) {
@@ -53,6 +54,7 @@ export class UsersService {
       where: { id },
       select: { id: true, email: true, fullName: true, role: true },
     });
+
     if (!user) throw new NotFoundException('User not found');
     return user;
   }

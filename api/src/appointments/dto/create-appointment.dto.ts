@@ -1,17 +1,16 @@
-import { IsISO8601, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import { IsISO8601, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateAppointmentDto {
   @IsUUID()
-  doctorId: string;
+  doctorId!: string;
 
   @IsISO8601()
-  startTime: string; // ISO string from client
+  startTime!: string;
 
   @IsISO8601()
-  endTime: string;
+  endTime!: string;
 
   @IsOptional()
   @IsString()
-  @MinLength(3)
   reason?: string;
 }

@@ -8,7 +8,7 @@ export class CreateSlotsDto {
   to!: string;
 
   @IsInt()
-  @Min(5)
+  @Min(1)
   slotMinutes!: number;
 
   @IsOptional()

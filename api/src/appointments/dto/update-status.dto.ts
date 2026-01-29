@@ -1,17 +1,13 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum } from 'class-validator';
 
 export enum AppointmentStatusDto {
-  pending = 'pending',
-  confirmed = 'confirmed',
-  cancelled = 'cancelled',
-  completed = 'completed',
+  PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  CANCELLED = 'CANCELLED',
+  COMPLETED = 'COMPLETED',
 }
 
-export class UpdateAppointmentStatusDto {
+export class UpdateStatusDto {
   @IsEnum(AppointmentStatusDto)
-  status: AppointmentStatusDto;
-
-  @IsOptional()
-  @IsString()
-  notes?: string;
+  status!: AppointmentStatusDto;
 }

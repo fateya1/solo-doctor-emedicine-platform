@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  DOCTOR
+  PATIENT
+  ADMIN
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  fullName     String
+  role         UserRole
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctorProfile  DoctorProfile?
+  patientProfile PatientProfile?
+
+  doctorAppointments  Appointment[] @relation("DoctorAppointments")
+  patientAppointments Appointment[] @relation("PatientAppointments")
+
+  availabilitySlots AvailabilitySlot[] @relation("DoctorSlots")
+}
+
+model DoctorProfile {
+  id        String  @id @default(uuid())
+  userId    String  @unique
+  specialty String?
+  bio       String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PatientProfile {
+  id     String  @id @default(uuid())
+  userId String  @unique
+  age    Int?
+  gender String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AvailabilitySlot {
+  id        String   @id @default(uuid())
+  doctorId  String
+  startTime DateTime
+  endTime   DateTime
+
+  // A slot can be booked by exactly one appointment (optional).
+  // The foreign key lives on Appointment.slotId (unique), so we don't duplicate it here.
+  appointment Appointment?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctor User @relation("DoctorSlots", fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@unique([doctorId, startTime, endTime])
+  @@index([doctorId, startTime])
+}
+
+model Appointment {
+  id        String @id @default(uuid())
+  doctorId  String
+  patientId String
+
+  startTime DateTime
+  endTime   DateTime
+
+  status AppointmentStatus @default(PENDING)
+  reason String?
+  notes  String?
+
+  // Slot link (unique ensures a slot can only be booked once)
+  slotId String?           @unique
+  slot   AvailabilitySlot? @relation(fields: [slotId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctor  User @relation("DoctorAppointments", fields: [doctorId], references: [id], onDelete: Cascade)
+  patient User @relation("PatientAppointments", fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId, startTime])
+  @@index([patientId, startTime])
+}
