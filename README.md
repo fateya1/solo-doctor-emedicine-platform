@@ -1,62 +1,103 @@
-# Solo Doctor E-Medicine Platform
+﻿# Solo Doctor E-Medicine Platform
 
-A full-stack e-medicine platform designed for a **solo medical doctor** to provide remote healthcare services, including online consultations, appointment scheduling, electronic prescriptions, and secure patient management via web and mobile applications.
-
----
-
-## 🚀 Project Overview
-
-The Solo Doctor E-Medicine Platform enables a medical doctor to:
-- Offer virtual consultations (video, audio, chat)
-- Manage patient appointments
-- Issue electronic prescriptions
-- Maintain secure digital medical records
-- Accept online payments for consultations
-
-The system is intentionally **simple, scalable, and cost-effective**, suitable for a single-doctor practice with future expansion capability.
-
----
-
-## 🧑‍⚕️ Target Users
-
-- **Doctor (Admin & Practitioner)**  
-- **Patients**
-
----
-
-## ✨ Core Features
-
-### Patient Features
-- User registration and secure authentication
-- View doctor profile and availability
-- Book, reschedule, or cancel appointments
-- Attend online consultations (video/audio/chat)
-- Upload medical documents
-- Receive and download e-prescriptions (PDF)
-- View consultation and prescription history
-- Secure messaging with the doctor
-- Online payment for consultations (optional)
-
-### Doctor Features (Admin Dashboard)
-- Manage profile, availability, and consultation fees
-- View and manage appointments
-- Conduct virtual consultations
-- Access patient medical history
-- Write consultation notes and diagnosis
-- Generate and send electronic prescriptions
-- View basic reports (appointments & payments)
-
----
+A modern telemedicine platform built with NestJS following international best practices.
 
 ## 🏗️ Project Structure
 
-```bash
+\\\
 solo-doctor-emedicine-platform/
-│
-├── backend/        # Backend API & business logic
-├── frontend/       # Web application (doctor & patient portals)
-├── mobile-app/     # Mobile application (Android / iOS)
-├── docs/           # Documentation & specifications
-├── .env.example    # Environment variables template
-├── README.md
-└── LICENSE
+├── prisma/
+│   ├── schema.prisma          # Database schema
+│   └── migrations/            # Database migrations
+├── src/
+│   ├── common/                # Shared utilities
+│   │   ├── decorators/
+│   │   ├── filters/
+│   │   ├── guards/
+│   │   ├── interceptors/
+│   │   ├── pipes/
+│   │   └── middleware/
+│   ├── config/                # Configuration files
+│   ├── database/              # Database utilities
+│   │   ├── migrations/
+│   │   └── seeds/
+│   ├── modules/               # Feature modules
+│   │   ├── appointments/      # Appointment management
+│   │   ├── availability/      # Doctor availability
+│   │   ├── auth/             # Authentication & authorization
+│   │   └── users/            # User management
+│   ├── app.module.ts
+│   └── main.ts
+├── test/
+│   ├── unit/                 # Unit tests
+│   ├── e2e/                  # End-to-end tests
+│   └── integration/          # Integration tests
+├── .env.example              # Environment variables template
+├── package.json
+└── tsconfig.json
+\\\
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v18 or higher)
+- PostgreSQL
+- npm or yarn
+
+### Installation
+
+1. Clone the repository
+\\\ash
+git clone https://github.com/fateya1/solo-doctor-emedicine-platform.git
+cd solo-doctor-emedicine-platform
+\\\
+
+2. Install dependencies
+\\\ash
+npm install
+\\\
+
+3. Set up environment variables
+\\\ash
+cp .env.example .env
+# Edit .env with your database credentials
+\\\
+
+4. Run database migrations
+\\\ash
+npx prisma generate
+npx prisma migrate dev
+\\\
+
+5. Start the development server
+\\\ash
+npm run start:dev
+\\\
+
+## 📚 API Documentation
+
+[Add your API documentation here]
+
+## 🧪 Testing
+
+\\\ash
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+\\\
+
+## 🛠️ Built With
+
+- [NestJS](https://nestjs.com/) - Progressive Node.js framework
+- [Prisma](https://www.prisma.io/) - Next-generation ORM
+- [PostgreSQL](https://www.postgresql.org/) - Database
+- [TypeScript](https://www.typescriptlang.org/) - Language
+
+## 📝 License
+
+[Add your license here]
