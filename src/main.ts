@@ -41,3 +41,13 @@ async function bootstrap() {
 }
 
 bootstrap();
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { RoleMiddleware } from './common/middleware/role.middleware';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.useGlobalGuards(new RoleMiddleware());
+  await app.listen(3000);
+}
+bootstrap();

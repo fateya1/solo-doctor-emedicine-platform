@@ -1,4 +1,4 @@
-﻿// This is your Prisma schema file,
+// This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
@@ -20,6 +20,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  availabilitySlots AvailabilitySlot[] @relation("DoctorSlots")
+  appointments      Appointment[]      @relation("PatientAppointments")
+
   @@map("users")
 }
 
@@ -32,21 +35,23 @@ model AvailabilitySlot {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  doctor       User          @relation("DoctorSlots", fields: [doctorId], references: [id], onDelete: Cascade)
   appointments Appointment[]
 
   @@map("availability_slots")
 }
 
 model Appointment {
-  id                  String   @id @default(uuid())
-  patientId           String
-  availabilitySlotId  String
-  status              String   @default("scheduled")
-  notes               String?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                 String   @id @default(uuid())
+  patientId          String
+  availabilitySlotId String
+  status             String   @default("scheduled")
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  availabilitySlot AvailabilitySlot @relation(fields: [availabilitySlotId], references: [id])
+  patient          User             @relation("PatientAppointments", fields: [patientId], references: [id], onDelete: Cascade)
+  availabilitySlot AvailabilitySlot @relation(fields: [availabilitySlotId], references: [id], onDelete: Cascade)
 
   @@map("appointments")
 }

@@ -25,4 +25,11 @@
     }
   },
   "include": ["src/**/*"]
+}{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@prisma/*": ["node_modules/.prisma/client"]
+    }
+  }
 }
