@@ -1,63 +1,35 @@
-import { PrismaClient, UserRole } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
-
+import { PrismaClient, UserRole } from "@prisma/client";
+import * as bcrypt from "bcrypt";
 const prisma = new PrismaClient();
-
 async function main() {
-  // Create 3 users (doctor/patient/admin) if they don't exist
-  const password = 'TestPassword123!'; // change if you want
-  const passwordHash = await bcrypt.hash(password, 10);
-
-  const doctor = await prisma.user.upsert({
-    where: { email: 'doctor@test.com' },
+  const passwordHash = await bcrypt.hash(process.env.SEED_PASSWORD ?? "Admin@123!", 12);
+  const tenant = await prisma.tenant.upsert({
+    where: { slug: "default" },
+    update: { name: "Solo Doctor Clinic", isActive: true },
+    create: { name: "Solo Doctor Clinic", slug: "default", isActive: true },
+  });
+  console.log("Tenant ready:", tenant.slug, "| ID:", tenant.id);
+  await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: tenant.id, email: "admin@clinic.com" } },
+    update: {},
+    create: { tenantId: tenant.id, email: "admin@clinic.com", passwordHash, fullName: "System Administrator", role: UserRole.ADMIN },
+  });
+  console.log("Admin ready");
+  await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: tenant.id, email: "doctor@clinic.com" } },
     update: {},
     create: {
-      email: 'doctor@test.com',
-      fullName: 'Test Doctor',
-      passwordHash,
-      role: UserRole.doctor,
-      doctorProfile: {
-        create: { specialty: 'General Medicine', bio: 'Seeded doctor profile' },
-      },
+      tenantId: tenant.id, email: "doctor@clinic.com", passwordHash, fullName: "Dr. Jane Smith", role: UserRole.DOCTOR,
+      doctorProfile: { create: { specialty: "General Practice", bio: "Experienced GP", licenseNumber: "GP-001", yearsOfExperience: 10, consultationFee: 50, isVerified: true } },
     },
   });
-
-  const patient = await prisma.user.upsert({
-    where: { email: 'patient@test.com' },
+  console.log("Doctor ready");
+  await prisma.user.upsert({
+    where: { tenantId_email: { tenantId: tenant.id, email: "patient@clinic.com" } },
     update: {},
-    create: {
-      email: 'patient@test.com',
-      fullName: 'Test Patient',
-      passwordHash,
-      role: UserRole.patient,
-      patientProfile: {
-        create: { age: 25, gender: 'Female', allergies: 'None' },
-      },
-    },
+    create: { tenantId: tenant.id, email: "patient@clinic.com", passwordHash, fullName: "John Patient", role: UserRole.PATIENT, patientProfile: { create: {} } },
   });
-
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@test.com' },
-    update: {},
-    create: {
-      email: 'admin@test.com',
-      fullName: 'Test Admin',
-      passwordHash,
-      role: UserRole.admin,
-    },
-  });
-
-  console.log('Seeded users:', {
-    doctor: doctor.email,
-    patient: patient.email,
-    admin: admin.email,
-  });
+  console.log("Patient ready");
+  console.log("\nDone! Password: Admin@123! | DEFAULT_TENANT_ID=" + tenant.id);
 }
-
-main()
-  .then(() => prisma.$disconnect())
-  .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
-    process.exit(1);
-  });
+main().catch((e) => { console.error(e); process.exit(1); }).finally(async () => { await prisma.$disconnect(); });
