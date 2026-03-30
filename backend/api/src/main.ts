@@ -1,15 +1,13 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
-import { ValidationPipe, VersioningType } from "@nestjs/common";
+import { ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Global prefix — excludes docs
-  app.setGlobalPrefix("api", {
-    exclude: ["docs", "docs/(.*)"],
-  });
+  // Global prefix for all API routes
+  app.setGlobalPrefix("api");
 
   // Global validation
   app.useGlobalPipes(
@@ -26,14 +24,15 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Swagger
+  // Swagger — mounted at /docs (outside global prefix)
   const config = new DocumentBuilder()
     .setTitle("Solo Doctor eMedicine API")
     .setDescription(
-      "Multi-tenant e-medicine platform API. " +
+      "Multi-tenant e-medicine platform. " +
       "Login via POST /api/auth/login to get a Bearer token, then click Authorize.",
     )
     .setVersion("1.0.0")
+    .addServer("/", "Default")
     .addBearerAuth(
       { type: "http", scheme: "bearer", bearerFormat: "JWT" },
       "access-token",
@@ -47,6 +46,17 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
+
+  // Fix double-prefix by removing the /api prefix from swagger paths
+  const apiPrefix = "api";
+  Object.keys(document.paths).forEach((path) => {
+    if (path.startsWith("/" + apiPrefix + "/")) {
+      const newPath = path.replace("/" + apiPrefix, "");
+      document.paths[newPath] = document.paths[path];
+      delete document.paths[path];
+    }
+  });
+
   SwaggerModule.setup("docs", app, document, {
     swaggerOptions: { persistAuthorization: true },
   });
