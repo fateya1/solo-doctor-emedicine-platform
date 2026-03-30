@@ -1,4 +1,3 @@
-@'
 import { PrismaClient, UserRole } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 
@@ -21,16 +20,14 @@ async function main() {
     },
   });
 
-  console.log("✅ Seeded admin user");
+  console.log("Seeded admin user successfully");
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Seed failed:", e);
+    console.error("Seed failed:", e);
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await prisma.();
   });
-'@ | Set-Content -Encoding UTF8 prisma\seed.ts
-
