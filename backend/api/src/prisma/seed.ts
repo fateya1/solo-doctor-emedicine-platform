@@ -33,3 +33,4 @@ main()
     await prisma.$disconnect();
   });
 '@ | Set-Content -Encoding UTF8 prisma\seed.ts
+
