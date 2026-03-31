@@ -1,8 +1,8 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { Calendar, Clock, User, LogOut, Stethoscope } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Calendar, Clock, User, LogOut, Stethoscope, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
@@ -21,13 +21,13 @@ export default function PatientDashboard() {
     enabled: !!token,
   });
 
-  const { data: appointments } = useQuery({
+  const { data: appointments, refetch: refetchAppointments } = useQuery({
     queryKey: ["appointments"],
     queryFn: () => apiClient.get("/appointments").then((r) => r.data),
     enabled: !!token,
   });
 
-  const { data: slots } = useQuery({
+  const { data: slots, refetch: refetchSlots } = useQuery({
     queryKey: ["available-slots"],
     queryFn: () => apiClient.get("/availability/slots").then((r) => r.data),
     enabled: !!token,
@@ -35,7 +35,6 @@ export default function PatientDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
       <header className="bg-white border-b border-slate-100 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -55,16 +54,15 @@ export default function PatientDashboard() {
       </header>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-5 mb-8">
           {[
-            { icon: Calendar, label: "Total appointments", value: appointments?.length ?? 0, color: "brand" },
-            { icon: Clock, label: "Upcoming", value: appointments?.filter((a: any) => a.status === "CONFIRMED").length ?? 0, color: "teal" },
-            { icon: User, label: "Profile complete", value: profile ? "Yes" : "No", color: "brand" },
-          ].map(({ icon: Icon, label, value, color }) => (
+            { icon: Calendar, label: "Total appointments", value: appointments?.length ?? 0 },
+            { icon: Clock, label: "Confirmed", value: appointments?.filter((a: any) => a.status === "CONFIRMED").length ?? 0 },
+            { icon: User, label: "Profile", value: profile ? "Complete" : "Incomplete" },
+          ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="card">
-              <div className={`w-9 h-9 bg-${color}-50 rounded-xl flex items-center justify-center mb-3`}>
-                <Icon className={`w-4 h-4 text-${color}-600`} />
+              <div className="w-9 h-9 bg-brand-50 rounded-xl flex items-center justify-center mb-3">
+                <Icon className="w-4 h-4 text-brand-600" />
               </div>
               <p className="text-2xl font-bold text-slate-900">{value}</p>
               <p className="text-sm text-slate-500 mt-0.5">{label}</p>
@@ -73,31 +71,23 @@ export default function PatientDashboard() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Available slots */}
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-4">Available slots</h2>
             {!slots?.length ? (
               <p className="text-slate-400 text-sm">No available slots right now.</p>
             ) : (
               <div className="space-y-3">
-                {slots.slice(0, 5).map((slot: any) => (
-                  <div key={slot.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">
-                        {format(new Date(slot.startTime), "MMM d, yyyy")}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {format(new Date(slot.startTime), "h:mm a")} â€” {format(new Date(slot.endTime), "h:mm a")}
-                      </p>
-                    </div>
-                    <BookButton slotId={slot.id} />
-                  </div>
+                {slots.filter((s: any) => s.isAvailable).slice(0, 5).map((slot: any) => (
+                  <SlotBookingRow
+                    key={slot.id}
+                    slot={slot}
+                    onBooked={() => { refetchSlots(); refetchAppointments(); }}
+                  />
                 ))}
               </div>
             )}
           </div>
 
-          {/* My appointments */}
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-4">My appointments</h2>
             {!appointments?.length ? (
@@ -128,28 +118,40 @@ export default function PatientDashboard() {
   );
 }
 
-function BookButton({ slotId }: { slotId: string }) {
-  const [loading, setLoading] = useState(false);
+function SlotBookingRow({ slot, onBooked }: { slot: any; onBooked: () => void }) {
   const [booked, setBooked] = useState(false);
-  const { useState } = require("react");
+  const queryClient = useQueryClient();
 
-  const book = async () => {
-    setLoading(true);
-    try {
-      await apiClient.post("/appointments/book", { slotId });
+  const mutation = useMutation({
+    mutationFn: () => apiClient.post("/appointments/book", { slotId: slot.id }),
+    onSuccess: () => {
       setBooked(true);
-    } catch {
-      alert("Booking failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["available-slots"] });
+      onBooked();
+    },
+    onError: () => alert("Booking failed. Please try again."),
+  });
 
-  if (booked) return <span className="text-xs text-green-600 font-medium">Booked!</span>;
   return (
-    <button onClick={book} disabled={loading}
-      className="text-xs btn-primary px-3 py-1.5 disabled:opacity-50">
-      {loading ? "..." : "Book"}
-    </button>
+    <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+      <div>
+        <p className="text-sm font-medium text-slate-800">
+          {format(new Date(slot.startTime), "MMM d, yyyy")}
+        </p>
+        <p className="text-xs text-slate-500">
+          {format(new Date(slot.startTime), "h:mm a")} — {format(new Date(slot.endTime), "h:mm a")}
+        </p>
+      </div>
+      {booked ? (
+        <span className="text-xs text-green-600 font-medium">Booked!</span>
+      ) : (
+        <button onClick={() => mutation.mutate()} disabled={mutation.isPending}
+          className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1">
+          {mutation.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
+          {mutation.isPending ? "..." : "Book"}
+        </button>
+      )}
+    </div>
   );
 }
