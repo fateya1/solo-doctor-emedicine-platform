@@ -1,11 +1,14 @@
 import axios from "axios";
 
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ??
+  "https://solo-doctor-emedicine-platform.onrender.com/api";
+
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api",
+  baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
 });
 
-// Attach JWT token from localStorage
 apiClient.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("token");
@@ -14,7 +17,6 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Redirect to login on 401
 apiClient.interceptors.response.use(
   (res) => res,
   (err) => {
