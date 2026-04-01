@@ -21,32 +21,34 @@ export default function DoctorDashboard() {
     }
   }, [token, _hasHydrated, router]);
 
-  const doctorId = user?.id;
-
   const today = new Date();
   const fromDate = today.toISOString();
   const toDate = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate()).toISOString();
 
+  // profile.id is the DoctorProfile ID — this is what the backend uses as doctorId
   const { data: profile } = useQuery({
     queryKey: ["doctor-profile"],
     queryFn: () => apiClient.get("/doctor/profile").then((r) => r.data),
     enabled: !!token && _hasHydrated,
   });
 
+  const doctorProfileId = profile?.id;
+
   const { data: slots } = useQuery({
-    queryKey: ["my-slots"],
+    queryKey: ["my-slots", doctorProfileId],
     queryFn: () =>
       apiClient
-        .get(`/availability/slots?doctorId=${doctorId}&from=${fromDate}&to=${toDate}`)
+        .get(`/availability/slots?doctorId=${doctorProfileId}&from=${fromDate}&to=${toDate}`)
         .then((r) => r.data),
-    enabled: !!token && _hasHydrated && !!doctorId,
+    enabled: !!token && _hasHydrated && !!doctorProfileId,
   });
 
   const addSlotMutation = useMutation({
     mutationFn: async () => {
+      if (!doctorProfileId) throw new Error("Doctor profile not loaded yet");
       const start = new Date(`${slotDate}T${slotTime}`);
-      const end = new Date(start.getTime() + 60 * 60_000); // 1 hour later
-      return apiClient.post(`/availability/slots?doctorId=${doctorId}`, {
+      const end = new Date(start.getTime() + 60 * 60_000);
+      return apiClient.post(`/availability/slots?doctorId=${doctorProfileId}`, {
         from: start.toISOString(),
         to: end.toISOString(),
         slotMinutes: 60,
@@ -54,13 +56,13 @@ export default function DoctorDashboard() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-slots"] });
+      queryClient.invalidateQueries({ queryKey: ["my-slots", doctorProfileId] });
       setShowAddSlot(false);
       setSlotDate("");
       setSlotTime("09:00");
     },
     onError: (err: any) => {
-      alert(err.response?.data?.message || "Failed to add slot. Please try again.");
+      alert(err.response?.data?.message || err.message || "Failed to add slot. Please try again.");
     },
   });
 
@@ -103,7 +105,9 @@ export default function DoctorDashboard() {
       <div className="max-w-6xl mx-auto px-6 py-8">
         {profile && (
           <div className="card mb-6 flex items-center gap-5">
-            <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center text-2xl">👨‍⚕️</div>
+            <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center text-2xl">
+              👨‍⚕️
+            </div>
             <div>
               <h2 className="font-semibold text-slate-900">{user?.fullName}</h2>
               <p className="text-sm text-slate-500">{profile.specialty ?? "General Practice"}</p>
@@ -140,7 +144,8 @@ export default function DoctorDashboard() {
             <h2 className="font-semibold text-slate-900">Availability slots</h2>
             <button
               onClick={() => setShowAddSlot(!showAddSlot)}
-              className="btn-primary text-sm flex items-center gap-1.5"
+              disabled={!doctorProfileId}
+              className="btn-primary text-sm flex items-center gap-1.5 disabled:opacity-50"
             >
               <Plus className="w-4 h-4" /> Add slot
             </button>
