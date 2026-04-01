@@ -8,30 +8,42 @@ import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 
 export default function PatientDashboard() {
-  const { user, token, logout } = useAuthStore();
+  const { user, token, logout, _hasHydrated } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
-    if (!token) router.push("/auth/login");
-  }, [token, router]);
+    if (_hasHydrated && !token) {
+      router.push("/auth/login");
+    }
+  }, [token, _hasHydrated, router]);
 
   const { data: profile } = useQuery({
     queryKey: ["patient-profile"],
     queryFn: () => apiClient.get("/patient/profile").then((r) => r.data),
-    enabled: !!token,
+    enabled: !!token && _hasHydrated,
   });
 
   const { data: appointments, refetch: refetchAppointments } = useQuery({
     queryKey: ["appointments"],
     queryFn: () => apiClient.get("/appointments").then((r) => r.data),
-    enabled: !!token,
+    enabled: !!token && _hasHydrated,
   });
 
   const { data: slots, refetch: refetchSlots } = useQuery({
     queryKey: ["available-slots"],
     queryFn: () => apiClient.get("/availability/slots").then((r) => r.data),
-    enabled: !!token,
+    enabled: !!token && _hasHydrated,
   });
+
+  if (!_hasHydrated) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!token) return null;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -73,7 +85,7 @@ export default function PatientDashboard() {
         <div className="grid md:grid-cols-2 gap-6">
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-4">Available slots</h2>
-            {!slots?.length ? (
+            {!slots?.filter((s: any) => s.isAvailable).length ? (
               <p className="text-slate-400 text-sm">No available slots right now.</p>
             ) : (
               <div className="space-y-3">

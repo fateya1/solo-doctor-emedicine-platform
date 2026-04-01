@@ -8,7 +8,7 @@ import { apiClient } from "@/lib/api";
 import { format, addHours } from "date-fns";
 
 export default function DoctorDashboard() {
-  const { user, token, logout } = useAuthStore();
+  const { user, token, logout, _hasHydrated } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [showAddSlot, setShowAddSlot] = useState(false);
@@ -16,19 +16,21 @@ export default function DoctorDashboard() {
   const [slotTime, setSlotTime] = useState("09:00");
 
   useEffect(() => {
-    if (!token) router.push("/auth/login");
-  }, [token, router]);
+    if (_hasHydrated && !token) {
+      router.push("/auth/login");
+    }
+  }, [token, _hasHydrated, router]);
 
   const { data: profile } = useQuery({
     queryKey: ["doctor-profile"],
     queryFn: () => apiClient.get("/doctor/profile").then((r) => r.data),
-    enabled: !!token,
+    enabled: !!token && _hasHydrated,
   });
 
   const { data: slots } = useQuery({
     queryKey: ["my-slots"],
     queryFn: () => apiClient.get("/availability/slots").then((r) => r.data),
-    enabled: !!token,
+    enabled: !!token && _hasHydrated,
   });
 
   const addSlotMutation = useMutation({
@@ -42,8 +44,19 @@ export default function DoctorDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-slots"] });
       setShowAddSlot(false);
+      setSlotDate("");
     },
   });
+
+  if (!_hasHydrated) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!token) return null;
 
   const totalSlots = slots?.length ?? 0;
   const bookedSlots = slots?.filter((s: any) => !s.isAvailable).length ?? 0;
@@ -70,11 +83,10 @@ export default function DoctorDashboard() {
       </header>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Profile card */}
         {profile && (
           <div className="card mb-6 flex items-center gap-5">
             <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center text-2xl">
-              ðŸ‘¨â€âš•ï¸
+              👨‍⚕️
             </div>
             <div>
               <h2 className="font-semibold text-slate-900">{user?.fullName}</h2>
@@ -85,13 +97,12 @@ export default function DoctorDashboard() {
               <span className={`text-xs font-medium px-3 py-1 rounded-full ${
                 profile.isVerified ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-600"
               }`}>
-                {profile.isVerified ? "âœ“ Verified" : "Pending verification"}
+                {profile.isVerified ? "✓ Verified" : "Pending verification"}
               </span>
             </div>
           </div>
         )}
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-5 mb-8">
           {[
             { icon: Calendar, label: "Total slots", value: totalSlots },
@@ -108,16 +119,15 @@ export default function DoctorDashboard() {
           ))}
         </div>
 
-        {/* Slots management */}
         <div className="card">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-semibold text-slate-900">Availability slots</h2>
-            <button onClick={() => setShowAddSlot(!showAddSlot)} className="btn-primary text-sm flex items-center gap-1.5">
+            <button onClick={() => setShowAddSlot(!showAddSlot)}
+              className="btn-primary text-sm flex items-center gap-1.5">
               <Plus className="w-4 h-4" /> Add slot
             </button>
           </div>
 
-          {/* Add slot form */}
           {showAddSlot && (
             <div className="bg-brand-50 border border-brand-100 rounded-xl p-4 mb-5">
               <h3 className="text-sm font-medium text-brand-800 mb-3">New availability slot (1 hour)</h3>
@@ -137,7 +147,7 @@ export default function DoctorDashboard() {
           )}
 
           {!slots?.length ? (
-            <p className="text-slate-400 text-sm">No slots added yet. Add your first availability slot above.</p>
+            <p className="text-slate-400 text-sm">No slots added yet.</p>
           ) : (
             <div className="space-y-2">
               {slots.map((slot: any) => (
@@ -147,7 +157,7 @@ export default function DoctorDashboard() {
                       {format(new Date(slot.startTime), "EEEE, MMM d yyyy")}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {format(new Date(slot.startTime), "h:mm a")} â€” {format(new Date(slot.endTime), "h:mm a")}
+                      {format(new Date(slot.startTime), "h:mm a")} — {format(new Date(slot.endTime), "h:mm a")}
                     </p>
                   </div>
                   <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
