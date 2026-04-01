@@ -1,22 +1,14 @@
-import { Body, Controller, Get, Patch, Req, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { Roles } from '../auth/roles.decorator';
-import { RolesGuard } from '../auth/roles.guard';
-import { DoctorService } from './doctor.service';
+﻿import { Controller, Get, Req, UseGuards } from "@nestjs/common";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { DoctorService } from "./doctor.service";
 
-@Controller('doctor')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('doctor')
+@Controller("doctor")
 export class DoctorController {
-  constructor(private readonly doctorService: DoctorService) {}
+  constructor(private readonly service: DoctorService) {}
 
-  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  @Get("profile")
   getProfile(@Req() req: any) {
-    return this.doctorService.getProfile(req.user.sub);
-  }
-
-  @Patch('profile')
-  updateProfile(@Req() req: any, @Body() dto: { specialty?: string; bio?: string }) {
-    return this.doctorService.updateProfile(req.user.sub, dto);
+    return this.service.getProfileByUserId(req.user.sub);
   }
 }

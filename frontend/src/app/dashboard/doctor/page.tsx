@@ -28,7 +28,7 @@ export default function DoctorDashboard() {
   // Fetch doctor profile using userId — returns DoctorProfile with its own id
   const { data: profile } = useQuery({
     queryKey: ["doctor-profile", user?.id],
-    queryFn: () => apiClient.get(`/doctor/profile?userId=${user?.id}`).then((r) => r.data),
+    queryFn: () => apiClient.get("/doctor/profile").then((r) => r.data),
     enabled: !!token && _hasHydrated && !!user?.id,
   });
 
