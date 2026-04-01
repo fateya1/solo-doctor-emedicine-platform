@@ -1,7 +1,10 @@
 import axios from "axios";
 
+// Production API - solo doctor emedicine platform
+const BASE_URL = "https://solo-doctor-emedicine-platform.onrender.com/api";
+
 export const apiClient = axios.create({
-  baseURL: "https://solo-doctor-emedicine-platform.onrender.com/api",
+  baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
 });
 
