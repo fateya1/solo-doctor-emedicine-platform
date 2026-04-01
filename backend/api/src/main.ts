@@ -6,10 +6,8 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Global prefix for all API routes
   app.setGlobalPrefix("api");
 
-  // Global validation
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -18,13 +16,25 @@ async function bootstrap() {
     }),
   );
 
-  // CORS
+  // Allow all Vercel preview URLs + localhost
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(",") ?? true,
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      const allowed = [
+        /localhost/,
+        /\.vercel\.app$/,
+        /solo-doctor/,
+      ];
+      if (!origin || allowed.some((pattern) => pattern.test(origin))) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   });
 
-  // Swagger — mounted at /docs (outside global prefix)
   const config = new DocumentBuilder()
     .setTitle("Solo Doctor eMedicine API")
     .setDescription(
@@ -47,11 +57,9 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
 
-  // Fix double-prefix by removing the /api prefix from swagger paths
-  const apiPrefix = "api";
   Object.keys(document.paths).forEach((path) => {
-    if (path.startsWith("/" + apiPrefix + "/")) {
-      const newPath = path.replace("/" + apiPrefix, "");
+    if (path.startsWith("/api/")) {
+      const newPath = path.replace("/api", "");
       document.paths[newPath] = document.paths[path];
       delete document.paths[path];
     }
