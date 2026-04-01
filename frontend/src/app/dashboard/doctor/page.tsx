@@ -25,11 +25,11 @@ export default function DoctorDashboard() {
   const fromDate = today.toISOString();
   const toDate = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate()).toISOString();
 
-  // profile.id is the DoctorProfile ID — this is what the backend uses as doctorId
+  // Fetch doctor profile using userId — returns DoctorProfile with its own id
   const { data: profile } = useQuery({
-    queryKey: ["doctor-profile"],
-    queryFn: () => apiClient.get("/doctor/profile").then((r) => r.data),
-    enabled: !!token && _hasHydrated,
+    queryKey: ["doctor-profile", user?.id],
+    queryFn: () => apiClient.get(`/doctor/profile?userId=${user?.id}`).then((r) => r.data),
+    enabled: !!token && _hasHydrated && !!user?.id,
   });
 
   const doctorProfileId = profile?.id;
@@ -45,7 +45,7 @@ export default function DoctorDashboard() {
 
   const addSlotMutation = useMutation({
     mutationFn: async () => {
-      if (!doctorProfileId) throw new Error("Doctor profile not loaded yet");
+      if (!doctorProfileId) throw new Error("Doctor profile not loaded");
       const start = new Date(`${slotDate}T${slotTime}`);
       const end = new Date(start.getTime() + 60 * 60_000);
       return apiClient.post(`/availability/slots?doctorId=${doctorProfileId}`, {
@@ -62,7 +62,7 @@ export default function DoctorDashboard() {
       setSlotTime("09:00");
     },
     onError: (err: any) => {
-      alert(err.response?.data?.message || err.message || "Failed to add slot. Please try again.");
+      alert(err.response?.data?.message || err.message || "Failed to add slot.");
     },
   });
 
@@ -105,9 +105,7 @@ export default function DoctorDashboard() {
       <div className="max-w-6xl mx-auto px-6 py-8">
         {profile && (
           <div className="card mb-6 flex items-center gap-5">
-            <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center text-2xl">
-              👨‍⚕️
-            </div>
+            <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center text-2xl">👨‍⚕️</div>
             <div>
               <h2 className="font-semibold text-slate-900">{user?.fullName}</h2>
               <p className="text-sm text-slate-500">{profile.specialty ?? "General Practice"}</p>
@@ -120,6 +118,12 @@ export default function DoctorDashboard() {
                 {profile.isVerified ? "✓ Verified" : "Pending verification"}
               </span>
             </div>
+          </div>
+        )}
+
+        {!profile && _hasHydrated && (
+          <div className="card mb-6 bg-amber-50 border border-amber-100">
+            <p className="text-sm text-amber-700">⚠️ Doctor profile not found. Please contact support to set up your profile.</p>
           </div>
         )}
 
@@ -145,7 +149,8 @@ export default function DoctorDashboard() {
             <button
               onClick={() => setShowAddSlot(!showAddSlot)}
               disabled={!doctorProfileId}
-              className="btn-primary text-sm flex items-center gap-1.5 disabled:opacity-50"
+              title={!doctorProfileId ? "Doctor profile loading..." : ""}
+              className="btn-primary text-sm flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus className="w-4 h-4" /> Add slot
             </button>
