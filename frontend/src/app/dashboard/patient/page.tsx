@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -10,11 +10,10 @@ import { format } from "date-fns";
 export default function PatientDashboard() {
   const { user, token, logout, _hasHydrated } = useAuthStore();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (_hasHydrated && !token) {
-      router.push("/auth/login");
-    }
+    if (_hasHydrated && !token) router.push("/auth/login");
   }, [token, _hasHydrated, router]);
 
   const { data: profile } = useQuery({
@@ -24,14 +23,14 @@ export default function PatientDashboard() {
   });
 
   const { data: appointments, refetch: refetchAppointments } = useQuery({
-    queryKey: ["appointments"],
-    queryFn: () => apiClient.get("/appointments").then((r) => r.data),
+    queryKey: ["my-appointments"],
+    queryFn: () => apiClient.get("/appointments/my").then((r) => r.data),
     enabled: !!token && _hasHydrated,
   });
 
   const { data: slots, refetch: refetchSlots } = useQuery({
     queryKey: ["available-slots"],
-    queryFn: () => apiClient.get("/availability/slots").then((r) => r.data),
+    queryFn: () => apiClient.get("/availability/slots/available").then((r) => r.data),
     enabled: !!token && _hasHydrated,
   });
 
@@ -57,8 +56,10 @@ export default function PatientDashboard() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-slate-600">Hi, {user?.fullName?.split(" ")[0]}</span>
-            <button onClick={() => { logout(); router.push("/auth/login"); }}
-              className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-red-500 transition-colors">
+            <button
+              onClick={() => { logout(); router.push("/auth/login"); }}
+              className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-red-500 transition-colors"
+            >
               <LogOut className="w-4 h-4" /> Sign out
             </button>
           </div>
@@ -70,7 +71,7 @@ export default function PatientDashboard() {
           {[
             { icon: Calendar, label: "Total appointments", value: appointments?.length ?? 0 },
             { icon: Clock, label: "Confirmed", value: appointments?.filter((a: any) => a.status === "CONFIRMED").length ?? 0 },
-            { icon: User, label: "Profile", value: profile ? "Complete" : "Incomplete" },
+            { icon: User, label: "Profile", value: profile ? "Complete" : "Loading..." },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="card">
               <div className="w-9 h-9 bg-brand-50 rounded-xl flex items-center justify-center mb-3">
@@ -85,11 +86,11 @@ export default function PatientDashboard() {
         <div className="grid md:grid-cols-2 gap-6">
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-4">Available slots</h2>
-            {!slots?.filter((s: any) => s.isAvailable).length ? (
+            {!slots?.length ? (
               <p className="text-slate-400 text-sm">No available slots right now.</p>
             ) : (
               <div className="space-y-3">
-                {slots.filter((s: any) => s.isAvailable).slice(0, 5).map((slot: any) => (
+                {slots.slice(0, 8).map((slot: any) => (
                   <SlotBookingRow
                     key={slot.id}
                     slot={slot}
@@ -112,7 +113,10 @@ export default function PatientDashboard() {
                       <p className="text-sm font-medium text-slate-800">
                         {format(new Date(appt.availabilitySlot?.startTime ?? appt.createdAt), "MMM d, yyyy")}
                       </p>
-                      <p className="text-xs text-slate-500">{appt.reason ?? "General consultation"}</p>
+                      <p className="text-xs text-slate-500">
+                        Dr. {appt.availabilitySlot?.doctor?.user?.fullName ?? "Unknown"}
+                      </p>
+                      <p className="text-xs text-slate-400">{appt.reason ?? "General consultation"}</p>
                     </div>
                     <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
                       appt.status === "CONFIRMED" ? "bg-green-50 text-green-700" :
@@ -138,28 +142,33 @@ function SlotBookingRow({ slot, onBooked }: { slot: any; onBooked: () => void })
     mutationFn: () => apiClient.post("/appointments/book", { slotId: slot.id }),
     onSuccess: () => {
       setBooked(true);
-      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["my-appointments"] });
       queryClient.invalidateQueries({ queryKey: ["available-slots"] });
       onBooked();
     },
-    onError: () => alert("Booking failed. Please try again."),
+    onError: (err: any) => {
+      alert(err.response?.data?.message || "Booking failed. Please try again.");
+    },
   });
 
   return (
     <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
       <div>
         <p className="text-sm font-medium text-slate-800">
-          {format(new Date(slot.startTime), "MMM d, yyyy")}
+          Dr. {slot.doctor?.user?.fullName ?? "Unknown"}
         </p>
         <p className="text-xs text-slate-500">
-          {format(new Date(slot.startTime), "h:mm a")} — {format(new Date(slot.endTime), "h:mm a")}
+          {format(new Date(slot.startTime), "MMM d, yyyy")} · {format(new Date(slot.startTime), "h:mm a")} – {format(new Date(slot.endTime), "h:mm a")}
         </p>
       </div>
       {booked ? (
         <span className="text-xs text-green-600 font-medium">Booked!</span>
       ) : (
-        <button onClick={() => mutation.mutate()} disabled={mutation.isPending}
-          className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1">
+        <button
+          onClick={() => mutation.mutate()}
+          disabled={mutation.isPending}
+          className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1"
+        >
           {mutation.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
           {mutation.isPending ? "..." : "Book"}
         </button>
