@@ -16,15 +16,10 @@ async function bootstrap() {
     }),
   );
 
-  // Allow all Vercel preview URLs + localhost
   app.enableCors({
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-      const allowed = [
-        /localhost/,
-        /\.vercel\.app$/,
-        /solo-doctor/,
-      ];
-      if (!origin || allowed.some((pattern) => pattern.test(origin))) {
+      const allowed = [/localhost/, /\.vercel\.app$/, /solo-doctor/];
+      if (!origin || allowed.some((p) => p.test(origin))) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
@@ -37,16 +32,9 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle("Solo Doctor eMedicine API")
-    .setDescription(
-      "Multi-tenant e-medicine platform. " +
-      "Login via POST /api/auth/login to get a Bearer token, then click Authorize.",
-    )
+    .setDescription("Multi-tenant e-medicine platform. Login via POST /api/auth/login to get a Bearer token.")
     .setVersion("1.0.0")
-    .addServer("/", "Default")
-    .addBearerAuth(
-      { type: "http", scheme: "bearer", bearerFormat: "JWT" },
-      "access-token",
-    )
+    .addBearerAuth({ type: "http", scheme: "bearer", bearerFormat: "JWT" }, "access-token")
     .addTag("Auth", "Registration and login")
     .addTag("Users", "Current user profile")
     .addTag("Doctor", "Doctor profile and availability")
@@ -56,15 +44,6 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-
-  Object.keys(document.paths).forEach((path) => {
-    if (path.startsWith("/api/")) {
-      const newPath = path.replace("/api", "");
-      document.paths[newPath] = document.paths[path];
-      delete document.paths[path];
-    }
-  });
-
   SwaggerModule.setup("docs", app, document, {
     swaggerOptions: { persistAuthorization: true },
   });
@@ -72,7 +51,6 @@ async function bootstrap() {
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
   console.log("API running on port " + port);
-  console.log("Swagger docs at /docs");
 }
 
 bootstrap();
