@@ -1,6 +1,6 @@
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 
-@Controller('api/users')
+@Controller('users')
 export class UsersController {
     @Get('me')
   me(@Req() req: any) {

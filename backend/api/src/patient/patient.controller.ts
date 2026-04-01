@@ -4,7 +4,7 @@ import { Roles } from "../auth/roles.decorator";
 import { RolesGuard } from "../auth/roles.guard";
 import { PatientService, UpdatePatientProfileDto } from "./patient.service";
 
-@Controller("api/patient")
+@Controller("patient")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("PATIENT")
 export class PatientController {

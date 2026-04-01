@@ -4,7 +4,7 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { DoctorService } from './doctor.service';
 
-@Controller('api/doctor')
+@Controller('doctor')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('doctor')
 export class DoctorController {
