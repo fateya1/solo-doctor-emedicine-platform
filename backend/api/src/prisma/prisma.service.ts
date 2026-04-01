@@ -14,12 +14,28 @@ export class PrismaService
         { emit: "stdout", level: "error" },
         { emit: "stdout", level: "warn" },
       ],
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL,
+        },
+      },
     });
   }
 
   async onModuleInit() {
-    await this.$connect();
-    this.logger.log("Database connected");
+    let retries = 5;
+    while (retries > 0) {
+      try {
+        await this.$connect();
+        this.logger.log("Database connected");
+        return;
+      } catch (err) {
+        retries--;
+        this.logger.warn(`Database connection failed. Retries left: ${retries}`);
+        if (retries === 0) throw err;
+        await new Promise((res) => setTimeout(res, 3000));
+      }
+    }
   }
 
   async onModuleDestroy() {
