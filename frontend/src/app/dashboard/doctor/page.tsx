@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Calendar, Users, Clock, LogOut, Stethoscope, Plus, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
-import { format, addHours } from "date-fns";
+import { format } from "date-fns";
 
 export default function DoctorDashboard() {
   const { user, token, logout, _hasHydrated } = useAuthStore();
@@ -21,6 +21,12 @@ export default function DoctorDashboard() {
     }
   }, [token, _hasHydrated, router]);
 
+  const doctorId = user?.id;
+
+  const today = new Date();
+  const fromDate = today.toISOString();
+  const toDate = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate()).toISOString();
+
   const { data: profile } = useQuery({
     queryKey: ["doctor-profile"],
     queryFn: () => apiClient.get("/doctor/profile").then((r) => r.data),
@@ -29,22 +35,32 @@ export default function DoctorDashboard() {
 
   const { data: slots } = useQuery({
     queryKey: ["my-slots"],
-    queryFn: () => apiClient.get("/availability/slots").then((r) => r.data),
-    enabled: !!token && _hasHydrated,
+    queryFn: () =>
+      apiClient
+        .get(`/availability/slots?doctorId=${doctorId}&from=${fromDate}&to=${toDate}`)
+        .then((r) => r.data),
+    enabled: !!token && _hasHydrated && !!doctorId,
   });
 
   const addSlotMutation = useMutation({
     mutationFn: async () => {
       const start = new Date(`${slotDate}T${slotTime}`);
-      const end = addHours(start, 1);
-      return apiClient.post("/availability/slots", {
-        slots: [{ startTime: start.toISOString(), endTime: end.toISOString() }],
+      const end = new Date(start.getTime() + 60 * 60_000); // 1 hour later
+      return apiClient.post(`/availability/slots?doctorId=${doctorId}`, {
+        from: start.toISOString(),
+        to: end.toISOString(),
+        slotMinutes: 60,
+        breakMinutes: 0,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-slots"] });
       setShowAddSlot(false);
       setSlotDate("");
+      setSlotTime("09:00");
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.message || "Failed to add slot. Please try again.");
     },
   });
 
@@ -59,7 +75,7 @@ export default function DoctorDashboard() {
   if (!token) return null;
 
   const totalSlots = slots?.length ?? 0;
-  const bookedSlots = slots?.filter((s: any) => !s.isAvailable).length ?? 0;
+  const bookedSlots = slots?.filter((s: any) => s.appointment).length ?? 0;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -74,8 +90,10 @@ export default function DoctorDashboard() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-slate-600">Dr. {user?.fullName?.split(" ").slice(-1)[0]}</span>
-            <button onClick={() => { logout(); router.push("/auth/login"); }}
-              className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-red-500 transition-colors">
+            <button
+              onClick={() => { logout(); router.push("/auth/login"); }}
+              className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-red-500 transition-colors"
+            >
               <LogOut className="w-4 h-4" /> Sign out
             </button>
           </div>
@@ -85,9 +103,7 @@ export default function DoctorDashboard() {
       <div className="max-w-6xl mx-auto px-6 py-8">
         {profile && (
           <div className="card mb-6 flex items-center gap-5">
-            <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center text-2xl">
-              👨‍⚕️
-            </div>
+            <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center text-2xl">👨‍⚕️</div>
             <div>
               <h2 className="font-semibold text-slate-900">{user?.fullName}</h2>
               <p className="text-sm text-slate-500">{profile.specialty ?? "General Practice"}</p>
@@ -122,8 +138,10 @@ export default function DoctorDashboard() {
         <div className="card">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-semibold text-slate-900">Availability slots</h2>
-            <button onClick={() => setShowAddSlot(!showAddSlot)}
-              className="btn-primary text-sm flex items-center gap-1.5">
+            <button
+              onClick={() => setShowAddSlot(!showAddSlot)}
+              className="btn-primary text-sm flex items-center gap-1.5"
+            >
               <Plus className="w-4 h-4" /> Add slot
             </button>
           </div>
@@ -132,13 +150,24 @@ export default function DoctorDashboard() {
             <div className="bg-brand-50 border border-brand-100 rounded-xl p-4 mb-5">
               <h3 className="text-sm font-medium text-brand-800 mb-3">New availability slot (1 hour)</h3>
               <div className="flex gap-3">
-                <input type="date" value={slotDate} onChange={(e) => setSlotDate(e.target.value)}
-                  className="input flex-1" min={new Date().toISOString().split("T")[0]} />
-                <input type="time" value={slotTime} onChange={(e) => setSlotTime(e.target.value)}
-                  className="input w-36" />
-                <button onClick={() => addSlotMutation.mutate()}
+                <input
+                  type="date"
+                  value={slotDate}
+                  onChange={(e) => setSlotDate(e.target.value)}
+                  className="input flex-1"
+                  min={new Date().toISOString().split("T")[0]}
+                />
+                <input
+                  type="time"
+                  value={slotTime}
+                  onChange={(e) => setSlotTime(e.target.value)}
+                  className="input w-36"
+                />
+                <button
+                  onClick={() => addSlotMutation.mutate()}
                   disabled={!slotDate || addSlotMutation.isPending}
-                  className="btn-primary flex items-center gap-1.5">
+                  className="btn-primary flex items-center gap-1.5"
+                >
                   {addSlotMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                   Save
                 </button>
@@ -157,13 +186,13 @@ export default function DoctorDashboard() {
                       {format(new Date(slot.startTime), "EEEE, MMM d yyyy")}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {format(new Date(slot.startTime), "h:mm a")} — {format(new Date(slot.endTime), "h:mm a")}
+                      {format(new Date(slot.startTime), "h:mm a")} – {format(new Date(slot.endTime), "h:mm a")}
                     </p>
                   </div>
                   <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                    slot.isAvailable ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"
+                    !slot.appointment ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"
                   }`}>
-                    {slot.isAvailable ? "Available" : "Booked"}
+                    {!slot.appointment ? "Available" : "Booked"}
                   </span>
                 </div>
               ))}
