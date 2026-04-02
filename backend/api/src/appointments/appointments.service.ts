@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { EmailService } from "../email/email.service";
 import { BookSlotDto } from "./dto/book-slot.dto";
 import { AppointmentStatus } from "@prisma/client";
 
@@ -7,13 +8,16 @@ import { AppointmentStatus } from "@prisma/client";
 export class AppointmentsService {
   private readonly logger = new Logger(AppointmentsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
 
   async bookSlot(userId: string, dto: BookSlotDto) {
     return this.prisma.$transaction(async (tx) => {
       const slot = await tx.availabilitySlot.findUnique({
         where: { id: dto.slotId },
-        include: { appointment: true },
+        include: { appointment: true, doctor: { include: { user: true } } },
       });
 
       if (!slot) throw new NotFoundException("Availability slot not found");
@@ -23,6 +27,7 @@ export class AppointmentsService {
 
       const patientProfile = await tx.patientProfile.findUnique({
         where: { userId },
+        include: { user: true },
       });
       if (!patientProfile) throw new NotFoundException("Patient profile not found");
 
@@ -33,10 +38,6 @@ export class AppointmentsService {
           reason: dto.reason ?? null,
           status: AppointmentStatus.CONFIRMED,
         },
-        include: {
-          availabilitySlot: { include: { doctor: { include: { user: true } } } },
-          patient: { include: { user: true } },
-        },
       });
 
       await tx.availabilitySlot.update({
@@ -44,15 +45,30 @@ export class AppointmentsService {
         data: { isAvailable: false },
       });
 
+      // Send emails (non-blocking)
+      this.emailService.sendAppointmentConfirmation(
+        patientProfile.user.email,
+        patientProfile.user.fullName,
+        slot.doctor.user.fullName,
+        slot.startTime,
+        dto.reason,
+      ).catch(() => {});
+
+      this.emailService.sendAppointmentNotificationToDoctor(
+        slot.doctor.user.email,
+        slot.doctor.user.fullName,
+        patientProfile.user.fullName,
+        slot.startTime,
+        dto.reason,
+      ).catch(() => {});
+
       this.logger.log("Appointment booked: " + appointment.id);
       return appointment;
     });
   }
 
   async getPatientAppointments(userId: string) {
-    const patientProfile = await this.prisma.patientProfile.findUnique({
-      where: { userId },
-    });
+    const patientProfile = await this.prisma.patientProfile.findUnique({ where: { userId } });
     if (!patientProfile) throw new NotFoundException("Patient profile not found");
 
     return this.prisma.appointment.findMany({
@@ -65,13 +81,15 @@ export class AppointmentsService {
   }
 
   async cancelAppointment(appointmentId: string, userId: string, reason?: string) {
-    const patientProfile = await this.prisma.patientProfile.findUnique({
-      where: { userId },
-    });
+    const patientProfile = await this.prisma.patientProfile.findUnique({ where: { userId } });
     if (!patientProfile) throw new NotFoundException("Patient profile not found");
 
     const appointment = await this.prisma.appointment.findUnique({
       where: { id: appointmentId },
+      include: {
+        availabilitySlot: { include: { doctor: { include: { user: true } } } },
+        patient: { include: { user: true } },
+      },
     });
     if (!appointment) throw new NotFoundException("Appointment not found");
     if (appointment.patientId !== patientProfile.id) {
@@ -94,6 +112,22 @@ export class AppointmentsService {
         where: { id: appointment.slotId },
         data: { isAvailable: true },
       });
+
+      // Send cancellation emails (non-blocking)
+      this.emailService.sendAppointmentCancellation(
+        appointment.patient.user.email,
+        appointment.patient.user.fullName,
+        "PATIENT",
+        appointment.availabilitySlot.startTime,
+      ).catch(() => {});
+
+      this.emailService.sendAppointmentCancellation(
+        appointment.availabilitySlot.doctor.user.email,
+        appointment.availabilitySlot.doctor.user.fullName,
+        "DOCTOR",
+        appointment.availabilitySlot.startTime,
+      ).catch(() => {});
+
       return cancelled;
     });
   }

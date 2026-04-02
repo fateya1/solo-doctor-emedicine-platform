@@ -1,4 +1,4 @@
-﻿import { Module } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { PrismaModule } from "./prisma/prisma.module";
 import { AuthModule } from "./auth/auth.module";
@@ -8,11 +8,15 @@ import { AvailabilityModule } from "./availability/availability.module";
 import { DoctorModule } from "./doctor/doctor.module";
 import { PatientModule } from "./patient/patient.module";
 import { AdminModule } from "./admin/admin.module";
+import { EmailModule } from "./email/email.module";
+import { SubscriptionModule } from "./subscription/subscription.module";
+import { OnboardingModule } from "./onboarding/onboarding.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    EmailModule,
     AuthModule,
     UsersModule,
     AppointmentsModule,
@@ -20,6 +24,8 @@ import { AdminModule } from "./admin/admin.module";
     DoctorModule,
     PatientModule,
     AdminModule,
+    SubscriptionModule,
+    OnboardingModule,
   ],
 })
 export class AppModule {}

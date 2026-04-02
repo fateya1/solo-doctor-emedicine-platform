@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import { UsersService } from "../users/users.service";
+import { EmailService } from "../email/email.service";
 import { UserRole } from "@prisma/client";
 
 const DEFAULT_TENANT_ID = process.env.DEFAULT_TENANT_ID ?? "default-tenant";
@@ -11,6 +12,7 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly emailService: EmailService,
   ) {}
 
   async register(dto: {
@@ -20,10 +22,13 @@ export class AuthService {
     role: UserRole;
     tenantId?: string;
   }) {
-    return this.usersService.createUser({
+    const user = await this.usersService.createUser({
       ...dto,
       tenantId: dto.tenantId ?? DEFAULT_TENANT_ID,
     });
+    // Send welcome email (non-blocking)
+    this.emailService.sendWelcome(user.email, user.fullName, user.role).catch(() => {});
+    return user;
   }
 
   async login(dto: { email: string; password: string; tenantId?: string }) {

@@ -1,26 +1,32 @@
-﻿import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { EmailService } from "../email/email.service";
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
 
   async getPlatformStats() {
-    const [totalTenants, totalDoctors, totalPatients, totalAppointments, pendingVerifications] =
+    const [totalTenants, totalDoctors, totalPatients, totalAppointments, pendingVerifications, activeSubscriptions] =
       await Promise.all([
         this.prisma.tenant.count(),
         this.prisma.user.count({ where: { role: "DOCTOR" } }),
         this.prisma.user.count({ where: { role: "PATIENT" } }),
         this.prisma.appointment.count(),
         this.prisma.doctorProfile.count({ where: { isVerified: false } }),
+        this.prisma.tenantSubscription.count({ where: { status: "ACTIVE" } }),
       ]);
-    return { totalTenants, totalDoctors, totalPatients, totalAppointments, pendingVerifications };
+    return { totalTenants, totalDoctors, totalPatients, totalAppointments, pendingVerifications, activeSubscriptions };
   }
 
   async getAllTenants() {
     return this.prisma.tenant.findMany({
       include: {
         _count: { select: { users: true } },
+        subscription: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -37,6 +43,7 @@ export class AdminService {
             doctorProfile: { select: { id: true, isVerified: true, specialty: true } },
           },
         },
+        subscription: true,
       },
     });
     if (!tenant) throw new NotFoundException("Tenant not found");
@@ -63,12 +70,20 @@ export class AdminService {
   }
 
   async verifyDoctor(doctorProfileId: string) {
-    const profile = await this.prisma.doctorProfile.findUnique({ where: { id: doctorProfileId } });
+    const profile = await this.prisma.doctorProfile.findUnique({
+      where: { id: doctorProfileId },
+      include: { user: true },
+    });
     if (!profile) throw new NotFoundException("Doctor profile not found");
-    return this.prisma.doctorProfile.update({
+
+    const updated = await this.prisma.doctorProfile.update({
       where: { id: doctorProfileId },
       data: { isVerified: true },
     });
+
+    this.emailService.sendVerificationApproved(profile.user.email, profile.user.fullName).catch(() => {});
+
+    return updated;
   }
 
   async getAllDoctors() {
