@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
-import { UsersService } from "../users/users.service";
+import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
 import { UserRole } from "@prisma/client";
 
@@ -10,7 +10,7 @@ const DEFAULT_TENANT_ID = process.env.DEFAULT_TENANT_ID ?? "default-tenant";
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly usersService: UsersService,
+    private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
   ) {}
@@ -22,22 +22,47 @@ export class AuthService {
     role: UserRole;
     tenantId?: string;
   }) {
-    const user = await this.usersService.createUser({
-      ...dto,
-      tenantId: dto.tenantId ?? DEFAULT_TENANT_ID,
+    const tenantId = dto.tenantId ?? DEFAULT_TENANT_ID;
+    const email = dto.email.toLowerCase().trim();
+    const passwordHash = await this.prisma.user.findFirst().then(async () => {
+      const bcrypt = await import("bcrypt");
+      return bcrypt.hash(dto.password, 12);
     });
-    // Send welcome email (non-blocking)
+
+    const existing = await this.prisma.user.findUnique({
+      where: { tenantId_email: { tenantId, email } },
+    });
+    if (existing) throw new Error("Email already registered");
+
+    const user = await this.prisma.user.create({
+      data: {
+        tenantId,
+        email,
+        passwordHash,
+        fullName: dto.fullName.trim(),
+        role: dto.role,
+        doctorProfile: dto.role === UserRole.DOCTOR ? { create: {} } : undefined,
+        patientProfile: dto.role === UserRole.PATIENT ? { create: {} } : undefined,
+      },
+      select: {
+        id: true, email: true, fullName: true, role: true,
+        tenantId: true, createdAt: true,
+      },
+    });
+
     this.emailService.sendWelcome(user.email, user.fullName, user.role).catch(() => {});
     return user;
   }
 
   async login(dto: { email: string; password: string; tenantId?: string }) {
-    const tenantId = dto.tenantId ?? DEFAULT_TENANT_ID;
-    const user = await this.usersService.findByEmail(dto.email, tenantId);
+    const email = dto.email.toLowerCase().trim();
 
-    if (!user || !user.isActive) {
-      throw new UnauthorizedException("Invalid credentials");
-    }
+    // Find user by email across ALL tenants (for multi-tenant login)
+    const user = await this.prisma.user.findFirst({
+      where: { email, isActive: true },
+    });
+
+    if (!user) throw new UnauthorizedException("Invalid credentials");
 
     const passwordMatch = await bcrypt.compare(dto.password, user.passwordHash);
     if (!passwordMatch) throw new UnauthorizedException("Invalid credentials");
