@@ -45,7 +45,6 @@ export class AppointmentsService {
         data: { isAvailable: false },
       });
 
-      // Send emails (non-blocking)
       this.emailService.sendAppointmentConfirmation(
         patientProfile.user.email,
         patientProfile.user.fullName,
@@ -78,6 +77,52 @@ export class AppointmentsService {
       },
       orderBy: { createdAt: "desc" },
     });
+  }
+
+  async getDoctorAppointments(userId: string) {
+    const doctorProfile = await this.prisma.doctorProfile.findUnique({ where: { userId } });
+    if (!doctorProfile) throw new NotFoundException("Doctor profile not found");
+
+    return this.prisma.appointment.findMany({
+      where: { availabilitySlot: { doctorId: doctorProfile.id } },
+      include: {
+        availabilitySlot: true,
+        patient: { include: { user: { select: { fullName: true, email: true } } } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  async updateAppointmentStatus(appointmentId: string, userId: string, status: AppointmentStatus) {
+    const doctorProfile = await this.prisma.doctorProfile.findUnique({ where: { userId } });
+    if (!doctorProfile) throw new NotFoundException("Doctor profile not found");
+
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: { availabilitySlot: true },
+    });
+    if (!appointment) throw new NotFoundException("Appointment not found");
+    if (appointment.availabilitySlot.doctorId !== doctorProfile.id) {
+      throw new BadRequestException("Not authorized to update this appointment");
+    }
+
+    const updated = await this.prisma.appointment.update({
+      where: { id: appointmentId },
+      data: {
+        status,
+        ...(status === AppointmentStatus.CANCELLED ? { cancelledAt: new Date() } : {}),
+      },
+    });
+
+    // Free up slot if cancelled
+    if (status === AppointmentStatus.CANCELLED) {
+      await this.prisma.availabilitySlot.update({
+        where: { id: appointment.slotId },
+        data: { isAvailable: true },
+      });
+    }
+
+    return updated;
   }
 
   async cancelAppointment(appointmentId: string, userId: string, reason?: string) {
@@ -113,7 +158,6 @@ export class AppointmentsService {
         data: { isAvailable: true },
       });
 
-      // Send cancellation emails (non-blocking)
       this.emailService.sendAppointmentCancellation(
         appointment.patient.user.email,
         appointment.patient.user.fullName,
