@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Patch, Req, UseGuards } from "@nestjs/common";
+import { Controller, Get, Param, Patch, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { RolesGuard } from "../auth/roles.guard";
 import { Roles } from "../auth/roles.decorator";
@@ -53,6 +53,11 @@ export class AdminController {
   @Patch("users/:id/toggle")
   toggleUser(@Param("id") id: string) {
     return this.adminService.toggleUserStatus(id);
+  }
+
+  @Get("subscriptions")
+  getSubscriptions() {
+    return this.adminService.getAllSubscriptions();
   }
 
   @Get("appointments/recent")
