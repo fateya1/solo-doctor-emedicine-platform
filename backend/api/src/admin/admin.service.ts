@@ -114,6 +114,16 @@ export class AdminService {
     });
   }
 
+  async getAllSubscriptions() {
+    return this.prisma.tenantSubscription.findMany({
+      include: {
+        tenant: { select: { name: true, slug: true } },
+        payments: { orderBy: { createdAt: 'desc' }, take: 3 },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async getRecentAppointments() {
     return this.prisma.appointment.findMany({
       take: 20,
