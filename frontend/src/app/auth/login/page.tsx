@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -33,16 +33,17 @@ export default function LoginPage() {
       const role = res.data.user.role;
       if (role === "DOCTOR") router.push("/dashboard/doctor");
       else if (role === "PATIENT") router.push("/dashboard/patient");
-      else router.push("/dashboard/admin");
+      else if (role === "ADMIN") router.push("/dashboard/admin");
+      else router.push("/");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Invalid credentials");
+      const message = err.response?.data?.message || "Invalid credentials. Please try again.";
+      setError(Array.isArray(message) ? message[0] : message);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-teal-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 bg-brand-600 rounded-2xl mb-4">
             <Stethoscope className="w-6 h-6 text-white" />
@@ -54,8 +55,9 @@ export default function LoginPage() {
         <div className="card">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {error && (
-              <div className="bg-red-50 border border-red-100 text-red-600 text-sm px-4 py-3 rounded-xl">
-                {error}
+              <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl flex items-start gap-2">
+                <span className="mt-0.5">⚠️</span>
+                <span>{error}</span>
               </div>
             )}
 
@@ -71,18 +73,25 @@ export default function LoginPage() {
                 <input
                   {...register("password")}
                   type={showPassword ? "text" : "password"}
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                  placeholder="Min. 8 characters"
                   className="input pr-11"
                 />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
               {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
             </div>
 
-            <button type="submit" disabled={isSubmitting} className="btn-primary w-full flex items-center justify-center gap-2">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="btn-primary w-full flex items-center justify-center gap-2"
+            >
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
               {isSubmitting ? "Signing in..." : "Sign in"}
             </button>
