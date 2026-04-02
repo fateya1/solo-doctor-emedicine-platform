@@ -32,9 +32,7 @@ export default function LoginPage() {
       setAuth(res.data.accessToken, res.data.user);
       const role = res.data.user.role;
       if (role === "DOCTOR") {
-        // Check onboarding status
         try {
-          const ob = await apiClient.post("/auth/login", data);
           const status = await apiClient.get("/onboarding/status");
           if (!status.data.isComplete) {
             router.push("/onboarding");
