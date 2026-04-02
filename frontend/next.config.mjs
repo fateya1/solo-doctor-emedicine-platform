@@ -3,3 +3,4 @@ const nextConfig = {
   images: { domains: ["solo-doctor-emedicine-platform.onrender.com"] },
 };
 export default nextConfig;
+// redeploy
