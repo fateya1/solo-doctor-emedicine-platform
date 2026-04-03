@@ -2,11 +2,10 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { useAuthStore, useHydrationStore } from "@/store/auth";
+import { useAuthStore } from "@/store/auth";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { token } = useAuthStore();
-  const { _hasHydrated } = useHydrationStore();
+  const { token, _hasHydrated } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {

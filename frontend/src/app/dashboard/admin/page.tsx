@@ -7,15 +7,14 @@ import {
   LogOut, CheckCircle, XCircle, Clock, ChevronRight,
   Activity, CreditCard, TrendingUp, Menu, X
 } from "lucide-react";
-import { useAuthStore, useHydrationStore } from "@/store/auth";
+import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 
 type Tab = "overview" | "tenants" | "doctors" | "patients" | "appointments" | "subscriptions";
 
 export default function AdminDashboard() {
-  const { user, token, logout } = useAuthStore();
-  const { _hasHydrated } = useHydrationStore();
+  const { user, token, logout, _hasHydrated } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("overview");
@@ -428,4 +427,5 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
 

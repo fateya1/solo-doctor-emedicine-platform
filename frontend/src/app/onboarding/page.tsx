@@ -1,7 +1,7 @@
 ﻿"use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore, useHydrationStore } from "@/store/auth";
+import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { Stethoscope, User, FileText, CreditCard, CheckCircle, Loader2 } from "lucide-react";
 
@@ -42,8 +42,7 @@ const PLANS = [
 ];
 
 export default function OnboardingPage() {
-  const { user, token } = useAuthStore();
-  const { _hasHydrated } = useHydrationStore();
+  const { user, token, _hasHydrated } = useAuthStore();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>("PROFILE");
   const [loading, setLoading] = useState(true);
@@ -356,4 +355,5 @@ export default function OnboardingPage() {
     </div>
   );
 }
+
 

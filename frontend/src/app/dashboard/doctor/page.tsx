@@ -7,15 +7,14 @@ import {
   CheckCircle, XCircle, AlertCircle, CreditCard, TrendingUp,
   BarChart2, ArrowUp, ArrowDown, Menu, X
 } from "lucide-react";
-import { useAuthStore, useHydrationStore } from "@/store/auth";
+import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 
 type Tab = "appointments" | "slots" | "analytics" | "subscription";
 
 export default function DoctorDashboard() {
-  const { user, token, logout } = useAuthStore();
-  const { _hasHydrated } = useHydrationStore();
+  const { user, token, logout, _hasHydrated } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("appointments");
@@ -564,4 +563,5 @@ export default function DoctorDashboard() {
     </div>
   );
 }
+
 

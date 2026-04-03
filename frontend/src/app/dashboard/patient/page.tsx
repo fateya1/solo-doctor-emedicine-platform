@@ -3,15 +3,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Calendar, Clock, User, LogOut, Stethoscope, Loader2, Search, X, Menu } from "lucide-react";
-import { useAuthStore, useHydrationStore } from "@/store/auth";
+import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 
 type Tab = "find-doctors" | "appointments";
 
 export default function PatientDashboard() {
-  const { user, token, logout } = useAuthStore();
-  const { _hasHydrated } = useHydrationStore();
+  const { user, token, logout, _hasHydrated } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("find-doctors");
@@ -343,4 +342,5 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
     </div>
   );
 }
+
 
