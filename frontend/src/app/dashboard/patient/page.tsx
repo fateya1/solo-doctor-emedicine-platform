@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -67,7 +67,7 @@ export default function PatientDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* â”€â”€ Header â”€â”€ */}
+      {/* ── Header ── */}
       <header className="bg-white border-b border-slate-100 px-4 sm:px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -102,7 +102,7 @@ export default function PatientDashboard() {
       </header>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* â”€â”€ Stats: 1 col mobile â†’ 3 cols desktop â”€â”€ */}
+        {/* ── Stats: 1 col mobile → 3 cols desktop ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5 mb-6 sm:mb-8">
           {[
             { icon: Calendar, label: "Total appointments", value: appointments?.length ?? 0 },
@@ -121,7 +121,7 @@ export default function PatientDashboard() {
           ))}
         </div>
 
-        {/* â”€â”€ Tabs â”€â”€ */}
+        {/* ── Tabs ── */}
         <div className="flex gap-1 bg-white border border-slate-100 rounded-xl p-1 mb-6 w-full sm:w-fit">
           {[
             { key: "find-doctors" as Tab, label: "Find Doctors" },
@@ -136,10 +136,10 @@ export default function PatientDashboard() {
           ))}
         </div>
 
-        {/* â”€â”€ Find Doctors Tab â”€â”€ */}
+        {/* ── Find Doctors Tab ── */}
         {tab === "find-doctors" && (
           <div>
-            {/* Search bar â€” stacks on mobile */}
+            {/* Search bar — stacks on mobile */}
             <div className="card mb-6">
               <h2 className="font-semibold text-slate-900 mb-4">Search for a Doctor</h2>
               <div className="flex flex-col sm:flex-row gap-3">
@@ -194,7 +194,7 @@ export default function PatientDashboard() {
           </div>
         )}
 
-        {/* â”€â”€ Appointments Tab â”€â”€ */}
+        {/* ── Appointments Tab ── */}
         {tab === "appointments" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5">My Appointments</h2>
@@ -281,14 +281,14 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
   return (
     <div className="card">
       <div className="flex items-start gap-4 mb-4">
-        <div className="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center text-xl shrink-0">ðŸ‘¨â€âš•ï¸</div>
+        <div className="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center text-xl shrink-0">👨‍⚕️</div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-slate-900">{doctor.user?.fullName}</h3>
           <p className="text-sm text-brand-600">{doctor.specialty ?? "General Practice"}</p>
           <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{doctor.bio ?? "No bio available"}</p>
           <div className="flex gap-3 mt-2 text-xs text-slate-500 flex-wrap">
-            {doctor.yearsOfExperience && <span>ðŸŽ“ {doctor.yearsOfExperience} yrs</span>}
-            {doctor.consultationFee && <span>ðŸ’° KES {Number(doctor.consultationFee).toLocaleString()}</span>}
+            {doctor.yearsOfExperience && <span>🎓 {doctor.yearsOfExperience} yrs</span>}
+            {doctor.consultationFee && <span>💰 KES {Number(doctor.consultationFee).toLocaleString()}</span>}
           </div>
         </div>
       </div>
@@ -342,5 +342,3 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
     </div>
   );
 }
-
-

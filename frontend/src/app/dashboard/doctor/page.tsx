@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -127,7 +127,7 @@ export default function DoctorDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* â”€â”€ Header â”€â”€ */}
+      {/* ── Header ── */}
       <header className="bg-white border-b border-slate-100 px-4 sm:px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -164,11 +164,11 @@ export default function DoctorDashboard() {
       </header>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* â”€â”€ Profile card â”€â”€ */}
+        {/* ── Profile card ── */}
         {profile && (
           <div className="card mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center shrink-0"><svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v11a4 4 0 008 0V3M9 14a4 4 0 008 0" /></svg></div>
+              <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center text-2xl shrink-0">👨‍⚕️</div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold text-slate-900">{user?.fullName}</h2>
                 <p className="text-sm text-slate-500">{profile.specialty ?? "General Practice"} · {profile.yearsOfExperience ?? 0} yrs experience</p>
@@ -178,7 +178,7 @@ export default function DoctorDashboard() {
                 <span className={`text-xs font-medium px-3 py-1 rounded-full ${
                   profile.isVerified ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-600"
                 }`}>
-                  {profile.isVerified ? "âœ“ Verified" : "â³ Pending verification"}
+                  {profile.isVerified ? "✓ Verified" : "⏳ Pending verification"}
                 </span>
                 {subDaysLeft !== null && (
                   <span className={`text-xs font-medium px-3 py-1 rounded-full ${
@@ -193,7 +193,7 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* â”€â”€ Stats grid: 2 cols mobile â†’ 4 cols desktop â”€â”€ */}
+        {/* ── Stats grid: 2 cols mobile → 4 cols desktop ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {[
             { icon: Calendar, label: "Total appointments", value: appointments?.length ?? 0, color: "bg-purple-50 text-purple-600" },
@@ -211,7 +211,7 @@ export default function DoctorDashboard() {
           ))}
         </div>
 
-        {/* â”€â”€ Tabs: horizontally scrollable on mobile â”€â”€ */}
+        {/* ── Tabs: horizontally scrollable on mobile ── */}
         <div className="mb-6 overflow-x-auto">
           <div className="flex gap-1 bg-white border border-slate-100 rounded-xl p-1 w-max min-w-full sm:w-fit sm:min-w-0">
             {tabs.map(({ key, label }) => (
@@ -225,7 +225,7 @@ export default function DoctorDashboard() {
           </div>
         </div>
 
-        {/* â”€â”€ Appointments Tab â”€â”€ */}
+        {/* ── Appointments Tab ── */}
         {tab === "appointments" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5">Patient Appointments</h2>
@@ -281,7 +281,7 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* â”€â”€ Slots Tab â”€â”€ */}
+        {/* ── Slots Tab ── */}
         {tab === "slots" && (
           <div className="card">
             <div className="flex items-center justify-between mb-5">
@@ -319,7 +319,7 @@ export default function DoctorDashboard() {
                         {format(new Date(slot.startTime), "EEEE, MMM d yyyy")}
                       </p>
                       <p className="text-xs text-slate-500">
-                        {format(new Date(slot.startTime), "h:mm a")} â€“ {format(new Date(slot.endTime), "h:mm a")}
+                        {format(new Date(slot.startTime), "h:mm a")} – {format(new Date(slot.endTime), "h:mm a")}
                       </p>
                     </div>
                     <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
@@ -334,7 +334,7 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* â”€â”€ Analytics Tab â”€â”€ */}
+        {/* ── Analytics Tab ── */}
         {tab === "analytics" && (
           <div className="space-y-6">
             {!analytics ? (
@@ -343,7 +343,7 @@ export default function DoctorDashboard() {
               </div>
             ) : (
               <>
-                {/* KPI cards: 2 cols mobile â†’ 4 cols desktop */}
+                {/* KPI cards: 2 cols mobile → 4 cols desktop */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                   {[
                     {
@@ -402,7 +402,7 @@ export default function DoctorDashboard() {
 
                 {/* Monthly trend bar chart */}
                 <div className="card">
-                  <h3 className="font-semibold text-slate-900 mb-6">Appointments â€“ last 6 months</h3>
+                  <h3 className="font-semibold text-slate-900 mb-6">Appointments – last 6 months</h3>
                   <div className="flex items-end gap-2 sm:gap-3 h-40">
                     {analytics.monthlyTrend.map((m: any) => (
                       <div key={m.month} className="flex-1 flex flex-col items-center gap-2">
@@ -421,7 +421,7 @@ export default function DoctorDashboard() {
 
                 {/* Revenue trend */}
                 <div className="card">
-                  <h3 className="font-semibold text-slate-900 mb-4">Revenue â€“ last 6 months</h3>
+                  <h3 className="font-semibold text-slate-900 mb-4">Revenue – last 6 months</h3>
                   <div className="space-y-3">
                     {analytics.monthlyTrend.map((m: any) => {
                       const maxRevenue = Math.max(...analytics.monthlyTrend.map((x: any) => x.revenue), 1);
@@ -486,7 +486,7 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* â”€â”€ Subscription Tab â”€â”€ */}
+        {/* ── Subscription Tab ── */}
         {tab === "subscription" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5 flex items-center gap-2">
@@ -501,7 +501,7 @@ export default function DoctorDashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                {/* 1 col mobile â†’ 3 cols desktop */}
+                {/* 1 col mobile → 3 cols desktop */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   {[
                     { label: "Plan", value: subscription.plan },
@@ -517,13 +517,13 @@ export default function DoctorDashboard() {
                 <div className="bg-slate-50 rounded-xl p-4">
                   <p className="text-xs text-slate-500 mb-1">Billing period</p>
                   <p className="text-sm font-medium text-slate-800">
-                    {format(new Date(subscription.currentPeriodStart), "MMM d, yyyy")} â€“{" "}
+                    {format(new Date(subscription.currentPeriodStart), "MMM d, yyyy")} –{" "}
                     {format(new Date(subscription.currentPeriodEnd), "MMM d, yyyy")}
                   </p>
                 </div>
                 {subDaysLeft !== null && subDaysLeft <= 7 && (
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                    <p className="text-sm text-amber-800 font-medium">âš ï¸ Your subscription expires soon</p>
+                    <p className="text-sm text-amber-800 font-medium">⚠️ Your subscription expires soon</p>
                     <p className="text-xs text-amber-700 mt-1">Renew now to avoid service interruption.</p>
                     <button onClick={() => router.push("/onboarding")}
                       className="mt-3 text-xs bg-amber-600 text-white px-4 py-2.5 rounded-lg hover:bg-amber-700 touch-manipulation">
@@ -542,7 +542,7 @@ export default function DoctorDashboard() {
                               KES {Number(p.amount).toLocaleString()} · {p.plan}
                             </p>
                             <p className="text-xs text-slate-500">
-                              {p.mpesaReceiptNo ?? "Pending"} · {p.paidAt ? format(new Date(p.paidAt), "MMM d, yyyy") : "â€“"}
+                              {p.mpesaReceiptNo ?? "Pending"} · {p.paidAt ? format(new Date(p.paidAt), "MMM d, yyyy") : "–"}
                             </p>
                           </div>
                           <span className={`text-xs px-2.5 py-1 rounded-full font-medium w-fit ${
@@ -563,5 +563,3 @@ export default function DoctorDashboard() {
     </div>
   );
 }
-
-
