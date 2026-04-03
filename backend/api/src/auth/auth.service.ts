@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import { PrismaService } from "../prisma/prisma.service";
@@ -57,7 +57,6 @@ export class AuthService {
   async login(dto: { email: string; password: string; tenantId?: string }) {
     const email = dto.email.toLowerCase().trim();
 
-    // Find user by email across ALL tenants (for multi-tenant login)
     const user = await this.prisma.user.findFirst({
       where: { email, isActive: true },
     });
@@ -84,5 +83,55 @@ export class AuthService {
         tenantId: user.tenantId,
       },
     };
+  }
+
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const user = await this.prisma.user.findFirst({
+      where: { email: email.toLowerCase().trim(), isActive: true },
+    });
+
+    // Always return success — never reveal whether an email exists
+    if (!user) return { message: "If that email is registered, a reset link has been sent." };
+
+    // Sign a short-lived JWT specifically for password reset
+    const resetToken = await this.jwtService.signAsync(
+      { sub: user.id, email: user.email, purpose: "password-reset" },
+      { expiresIn: "1h" },
+    );
+
+    const resetUrl = `${process.env.FRONTEND_URL}/auth/reset-password?token=${resetToken}`;
+    await this.emailService.sendPasswordReset(user.email, user.fullName, resetUrl);
+
+    return { message: "If that email is registered, a reset link has been sent." };
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    if (!newPassword || newPassword.length < 8) {
+      throw new BadRequestException("Password must be at least 8 characters");
+    }
+
+    let payload: any;
+    try {
+      payload = await this.jwtService.verifyAsync(token);
+    } catch {
+      throw new BadRequestException("This reset link is invalid or has expired. Please request a new one.");
+    }
+
+    if (payload.purpose !== "password-reset") {
+      throw new BadRequestException("Invalid reset token");
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+    if (!user || !user.isActive) {
+      throw new BadRequestException("Account not found or is inactive");
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await this.prisma.user.update({
+      where: { id: payload.sub },
+      data: { passwordHash },
+    });
+
+    return { message: "Password updated successfully. You can now log in." };
   }
 }

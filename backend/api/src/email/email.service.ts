@@ -47,9 +47,40 @@ export class EmailService {
           <h1 style="color:#0284c7;">Welcome to SoloDoc, ${fullName}!</h1>
           <p>Your account has been created successfully as a <strong>${role}</strong>.</p>
           ${role === "DOCTOR" ? `<p>Please complete your onboarding to start accepting patients.</p>
-          <a href="${process.env.FRONTEND_URL}/onboarding" style="background:#0284c7;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:16px;">Complete Onboarding</a>` : 
+          <a href="${process.env.FRONTEND_URL}/onboarding" style="background:#0284c7;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:16px;">Complete Onboarding</a>` :
           `<p>You can now browse available doctors and book appointments.</p>
           <a href="${process.env.FRONTEND_URL}/dashboard/patient" style="background:#0284c7;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:16px;">Go to Dashboard</a>`}
+          <p style="color:#64748b;margin-top:32px;font-size:14px;">The SoloDoc Team</p>
+        </div>
+      `,
+    });
+  }
+
+  async sendPasswordReset(to: string, fullName: string, resetUrl: string): Promise<void> {
+    await this.send({
+      to,
+      subject: "Reset your SoloDoc password",
+      html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;">
+          <div style="text-align:center;margin-bottom:32px;">
+            <div style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;background:#eff6ff;border-radius:12px;margin-bottom:16px;">
+              <span style="font-size:24px;">🔒</span>
+            </div>
+            <h1 style="color:#0f172a;margin:0;font-size:24px;">Reset your password</h1>
+          </div>
+          <p style="color:#475569;">Hi ${fullName},</p>
+          <p style="color:#475569;">We received a request to reset the password for your SoloDoc account. Click the button below to choose a new password.</p>
+          <div style="text-align:center;margin:32px 0;">
+            <a href="${resetUrl}" style="background:#0284c7;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600;font-size:15px;">Reset Password</a>
+          </div>
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:16px 0;">
+            <p style="margin:0;color:#64748b;font-size:13px;">⏱ This link expires in <strong>1 hour</strong>.</p>
+            <p style="margin:8px 0 0;color:#64748b;font-size:13px;">🔐 If you didn't request a password reset, you can safely ignore this email. Your password will not change.</p>
+          </div>
+          <p style="color:#94a3b8;font-size:12px;margin-top:24px;">
+            If the button doesn't work, copy and paste this link into your browser:<br/>
+            <a href="${resetUrl}" style="color:#0284c7;word-break:break-all;">${resetUrl}</a>
+          </p>
           <p style="color:#64748b;margin-top:32px;font-size:14px;">The SoloDoc Team</p>
         </div>
       `,
@@ -178,6 +209,7 @@ export class EmailService {
       `,
     });
   }
+
   async sendSubscriptionRenewalReminder(
     to: string,
     fullName: string,

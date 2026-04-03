@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar, Users, Clock, LogOut, Stethoscope, Plus, Loader2,
   CheckCircle, XCircle, AlertCircle, CreditCard, TrendingUp,
-  BarChart2, ArrowUp, ArrowDown
+  BarChart2, ArrowUp, ArrowDown, Menu, X
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
@@ -21,6 +21,7 @@ export default function DoctorDashboard() {
   const [showAddSlot, setShowAddSlot] = useState(false);
   const [slotDate, setSlotDate] = useState("");
   const [slotTime, setSlotTime] = useState("09:00");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (_hasHydrated && !token) router.push("/auth/login");
@@ -126,55 +127,74 @@ export default function DoctorDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-100 px-6 py-4">
+      {/* ── Header ── */}
+      <header className="bg-white border-b border-slate-100 px-4 sm:px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
               <Stethoscope className="w-4 h-4 text-white" />
             </div>
             <span className="font-display font-bold text-lg">SoloDoc</span>
-            <span className="text-xs bg-teal-50 text-teal-700 font-medium px-2 py-0.5 rounded-full ml-2">Doctor</span>
+            <span className="text-xs bg-teal-50 text-teal-700 font-medium px-2 py-0.5 rounded-full ml-1 hidden sm:inline">Doctor</span>
           </div>
-          <div className="flex items-center gap-4">
+          {/* Desktop nav */}
+          <div className="hidden sm:flex items-center gap-4">
             <span className="text-sm text-slate-600">Dr. {user?.fullName?.split(" ").slice(-1)[0]}</span>
             <button onClick={() => { logout(); router.push("/auth/login"); }}
               className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-red-500 transition-colors">
               <LogOut className="w-4 h-4" /> Sign out
             </button>
           </div>
+          {/* Mobile hamburger */}
+          <button className="sm:hidden p-2 rounded-lg hover:bg-slate-50"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X className="w-5 h-5 text-slate-600" /> : <Menu className="w-5 h-5 text-slate-600" />}
+          </button>
         </div>
+        {/* Mobile menu dropdown */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden mt-3 pt-3 border-t border-slate-100 flex flex-col gap-3 pb-2">
+            <p className="text-sm text-slate-600 px-1">Dr. {user?.fullName}</p>
+            <button onClick={() => { logout(); router.push("/auth/login"); }}
+              className="flex items-center gap-1.5 text-sm text-red-500 px-1">
+              <LogOut className="w-4 h-4" /> Sign out
+            </button>
+          </div>
+        )}
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Profile card */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* ── Profile card ── */}
         {profile && (
-          <div className="card mb-6 flex items-center gap-5">
-            <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center text-2xl">👨‍⚕️</div>
-            <div>
-              <h2 className="font-semibold text-slate-900">{user?.fullName}</h2>
-              <p className="text-sm text-slate-500">{profile.specialty ?? "General Practice"} · {profile.yearsOfExperience ?? 0} yrs experience</p>
-              <p className="text-xs text-slate-400 mt-0.5">{profile.bio ?? "No bio yet"}</p>
-            </div>
-            <div className="ml-auto flex flex-col items-end gap-2">
-              <span className={`text-xs font-medium px-3 py-1 rounded-full ${
-                profile.isVerified ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-600"
-              }`}>
-                {profile.isVerified ? "✓ Verified" : "⏳ Pending verification"}
-              </span>
-              {subDaysLeft !== null && (
+          <div className="card mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center text-2xl shrink-0">👨‍⚕️</div>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-semibold text-slate-900">{user?.fullName}</h2>
+                <p className="text-sm text-slate-500">{profile.specialty ?? "General Practice"} · {profile.yearsOfExperience ?? 0} yrs experience</p>
+                <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{profile.bio ?? "No bio yet"}</p>
+              </div>
+              <div className="flex sm:flex-col items-start sm:items-end gap-2 flex-wrap">
                 <span className={`text-xs font-medium px-3 py-1 rounded-full ${
-                  subDaysLeft > 7 ? "bg-blue-50 text-blue-700" :
-                  subDaysLeft > 0 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"
+                  profile.isVerified ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-600"
                 }`}>
-                  {subDaysLeft > 0 ? `${subscription?.plan} · ${subDaysLeft}d left` : "Subscription expired"}
+                  {profile.isVerified ? "✓ Verified" : "⏳ Pending verification"}
                 </span>
-              )}
+                {subDaysLeft !== null && (
+                  <span className={`text-xs font-medium px-3 py-1 rounded-full ${
+                    subDaysLeft > 7 ? "bg-blue-50 text-blue-700" :
+                    subDaysLeft > 0 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"
+                  }`}>
+                    {subDaysLeft > 0 ? `${subscription?.plan} · ${subDaysLeft}d left` : "Subscription expired"}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        {/* ── Stats grid: 2 cols mobile → 4 cols desktop ── */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {[
             { icon: Calendar, label: "Total appointments", value: appointments?.length ?? 0, color: "bg-purple-50 text-purple-600" },
             { icon: CheckCircle, label: "Confirmed", value: confirmedAppts, color: "bg-green-50 text-green-600" },
@@ -186,24 +206,26 @@ export default function DoctorDashboard() {
                 <Icon className="w-4 h-4" />
               </div>
               <p className="text-2xl font-bold text-slate-900">{value}</p>
-              <p className="text-sm text-slate-500 mt-0.5">{label}</p>
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">{label}</p>
             </div>
           ))}
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 bg-white border border-slate-100 rounded-xl p-1 mb-6 w-fit">
-          {tabs.map(({ key, label }) => (
-            <button key={key} onClick={() => setTab(key)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                tab === key ? "bg-brand-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
-              }`}>
-              {label}
-            </button>
-          ))}
+        {/* ── Tabs: horizontally scrollable on mobile ── */}
+        <div className="mb-6 overflow-x-auto">
+          <div className="flex gap-1 bg-white border border-slate-100 rounded-xl p-1 w-max min-w-full sm:w-fit sm:min-w-0">
+            {tabs.map(({ key, label }) => (
+              <button key={key} onClick={() => setTab(key)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                  tab === key ? "bg-brand-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                }`}>
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Appointments Tab */}
+        {/* ── Appointments Tab ── */}
         {tab === "appointments" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5">Patient Appointments</h2>
@@ -212,7 +234,7 @@ export default function DoctorDashboard() {
             ) : (
               <div className="space-y-3">
                 {appointments.map((appt: any) => (
-                  <div key={appt.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                  <div key={appt.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-slate-50 rounded-xl">
                     <div>
                       <p className="text-sm font-semibold text-slate-800">
                         {appt.patient?.user?.fullName ?? "Unknown Patient"}
@@ -224,7 +246,7 @@ export default function DoctorDashboard() {
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">{appt.reason ?? "General consultation"}</p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
                         appt.status === "CONFIRMED" ? "bg-green-50 text-green-700" :
                         appt.status === "COMPLETED" ? "bg-blue-50 text-blue-700" :
@@ -236,17 +258,17 @@ export default function DoctorDashboard() {
                         <div className="flex gap-1">
                           <button onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "COMPLETED" })}
                             disabled={updateStatusMutation.isPending} title="Mark completed"
-                            className="w-7 h-7 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100">
+                            className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 touch-manipulation">
                             <CheckCircle className="w-4 h-4" />
                           </button>
                           <button onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "NO_SHOW" })}
                             disabled={updateStatusMutation.isPending} title="Mark no-show"
-                            className="w-7 h-7 flex items-center justify-center bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100">
+                            className="w-8 h-8 flex items-center justify-center bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 touch-manipulation">
                             <AlertCircle className="w-4 h-4" />
                           </button>
                           <button onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "CANCELLED" })}
                             disabled={updateStatusMutation.isPending} title="Cancel"
-                            className="w-7 h-7 flex items-center justify-center bg-red-50 text-red-500 rounded-lg hover:bg-red-100">
+                            className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-500 rounded-lg hover:bg-red-100 touch-manipulation">
                             <XCircle className="w-4 h-4" />
                           </button>
                         </div>
@@ -259,27 +281,27 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* Slots Tab */}
+        {/* ── Slots Tab ── */}
         {tab === "slots" && (
           <div className="card">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-semibold text-slate-900">Availability Slots</h2>
               <button onClick={() => setShowAddSlot(!showAddSlot)} disabled={!doctorProfileId}
-                className="btn-primary text-sm flex items-center gap-1.5 disabled:opacity-50">
+                className="btn-primary text-sm flex items-center gap-1.5 disabled:opacity-50 touch-manipulation">
                 <Plus className="w-4 h-4" /> Add slot
               </button>
             </div>
             {showAddSlot && (
               <div className="bg-brand-50 border border-brand-100 rounded-xl p-4 mb-5">
                 <h3 className="text-sm font-medium text-brand-800 mb-3">New availability slot (1 hour)</h3>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <input type="date" value={slotDate} onChange={(e) => setSlotDate(e.target.value)}
                     className="input flex-1" min={new Date().toISOString().split("T")[0]} />
                   <input type="time" value={slotTime} onChange={(e) => setSlotTime(e.target.value)}
-                    className="input w-36" />
+                    className="input sm:w-36" />
                   <button onClick={() => addSlotMutation.mutate()}
                     disabled={!slotDate || addSlotMutation.isPending}
-                    className="btn-primary flex items-center gap-1.5">
+                    className="btn-primary flex items-center justify-center gap-1.5 touch-manipulation">
                     {addSlotMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                     Save
                   </button>
@@ -312,7 +334,7 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* Analytics Tab */}
+        {/* ── Analytics Tab ── */}
         {tab === "analytics" && (
           <div className="space-y-6">
             {!analytics ? (
@@ -321,8 +343,8 @@ export default function DoctorDashboard() {
               </div>
             ) : (
               <>
-                {/* KPI cards */}
-                <div className="grid grid-cols-4 gap-4">
+                {/* KPI cards: 2 cols mobile → 4 cols desktop */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                   {[
                     {
                       label: "This month",
@@ -361,7 +383,7 @@ export default function DoctorDashboard() {
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${color}`}>
                         <Icon className="w-4 h-4" />
                       </div>
-                      <p className="text-xl font-bold text-slate-900">{value}</p>
+                      <p className="text-lg sm:text-xl font-bold text-slate-900 break-words">{value}</p>
                       <p className="text-xs text-slate-500 mt-0.5">{label}</p>
                       <div className="flex items-center gap-1 mt-2">
                         {trend !== null && trend !== undefined && (
@@ -380,8 +402,8 @@ export default function DoctorDashboard() {
 
                 {/* Monthly trend bar chart */}
                 <div className="card">
-                  <h3 className="font-semibold text-slate-900 mb-6">Appointments — last 6 months</h3>
-                  <div className="flex items-end gap-3 h-40">
+                  <h3 className="font-semibold text-slate-900 mb-6">Appointments – last 6 months</h3>
+                  <div className="flex items-end gap-2 sm:gap-3 h-40">
                     {analytics.monthlyTrend.map((m: any) => (
                       <div key={m.month} className="flex-1 flex flex-col items-center gap-2">
                         <p className="text-xs font-medium text-slate-600">{m.appointments}</p>
@@ -399,18 +421,18 @@ export default function DoctorDashboard() {
 
                 {/* Revenue trend */}
                 <div className="card">
-                  <h3 className="font-semibold text-slate-900 mb-4">Revenue — last 6 months</h3>
+                  <h3 className="font-semibold text-slate-900 mb-4">Revenue – last 6 months</h3>
                   <div className="space-y-3">
                     {analytics.monthlyTrend.map((m: any) => {
                       const maxRevenue = Math.max(...analytics.monthlyTrend.map((x: any) => x.revenue), 1);
                       const pct = Math.round((m.revenue / maxRevenue) * 100);
                       return (
-                        <div key={m.month} className="flex items-center gap-4">
-                          <p className="text-sm text-slate-600 w-8">{m.month}</p>
+                        <div key={m.month} className="flex items-center gap-3 sm:gap-4">
+                          <p className="text-sm text-slate-600 w-8 shrink-0">{m.month}</p>
                           <div className="flex-1 bg-slate-100 rounded-full h-2">
                             <div className="bg-green-500 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
                           </div>
-                          <p className="text-sm font-medium text-slate-800 w-28 text-right">
+                          <p className="text-xs sm:text-sm font-medium text-slate-800 w-24 sm:w-28 text-right shrink-0">
                             KES {m.revenue.toLocaleString()}
                           </p>
                         </div>
@@ -420,7 +442,7 @@ export default function DoctorDashboard() {
                 </div>
 
                 {/* Appointment breakdown */}
-                <div className="grid grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="card">
                     <h3 className="font-semibold text-slate-900 mb-4">Appointment breakdown</h3>
                     <div className="space-y-3">
@@ -449,7 +471,7 @@ export default function DoctorDashboard() {
                   <div className="card">
                     <h3 className="font-semibold text-slate-900 mb-4">Total revenue</h3>
                     <div className="flex flex-col items-center justify-center h-28">
-                      <p className="text-3xl font-bold text-green-600">
+                      <p className="text-2xl sm:text-3xl font-bold text-green-600">
                         KES {analytics.revenueTotal.toLocaleString()}
                       </p>
                       <p className="text-sm text-slate-500 mt-1">from {analytics.completedAppointments} completed sessions</p>
@@ -464,7 +486,7 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* Subscription Tab */}
+        {/* ── Subscription Tab ── */}
         {tab === "subscription" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5 flex items-center gap-2">
@@ -479,7 +501,8 @@ export default function DoctorDashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
+                {/* 1 col mobile → 3 cols desktop */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   {[
                     { label: "Plan", value: subscription.plan },
                     { label: "Status", value: subscription.status },
@@ -503,7 +526,7 @@ export default function DoctorDashboard() {
                     <p className="text-sm text-amber-800 font-medium">⚠️ Your subscription expires soon</p>
                     <p className="text-xs text-amber-700 mt-1">Renew now to avoid service interruption.</p>
                     <button onClick={() => router.push("/onboarding")}
-                      className="mt-3 text-xs bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700">
+                      className="mt-3 text-xs bg-amber-600 text-white px-4 py-2.5 rounded-lg hover:bg-amber-700 touch-manipulation">
                       Renew subscription
                     </button>
                   </div>
@@ -513,16 +536,16 @@ export default function DoctorDashboard() {
                     <h3 className="text-sm font-semibold text-slate-800 mb-3">Recent payments</h3>
                     <div className="space-y-2">
                       {subscription.payments.map((p: any) => (
-                        <div key={p.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                        <div key={p.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 bg-slate-50 rounded-xl">
                           <div>
                             <p className="text-sm font-medium text-slate-800">
                               KES {Number(p.amount).toLocaleString()} · {p.plan}
                             </p>
                             <p className="text-xs text-slate-500">
-                              {p.mpesaReceiptNo ?? "Pending"} · {p.paidAt ? format(new Date(p.paidAt), "MMM d, yyyy") : "—"}
+                              {p.mpesaReceiptNo ?? "Pending"} · {p.paidAt ? format(new Date(p.paidAt), "MMM d, yyyy") : "–"}
                             </p>
                           </div>
-                          <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                          <span className={`text-xs px-2.5 py-1 rounded-full font-medium w-fit ${
                             p.status === "COMPLETED" ? "bg-green-50 text-green-700" :
                             p.status === "FAILED" ? "bg-red-50 text-red-600" :
                             "bg-amber-50 text-amber-700"
