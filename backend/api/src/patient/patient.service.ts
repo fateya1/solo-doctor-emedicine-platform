@@ -1,13 +1,32 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { Gender } from "@prisma/client";
+import { IsOptional, IsString, IsArray, IsEnum, IsDateString } from "class-validator";
 
 export class UpdatePatientProfileDto {
+  @IsOptional()
+  @IsDateString()
   dateOfBirth?: Date;
+
+  @IsOptional()
+  @IsEnum(Gender)
   gender?: Gender;
+
+  @IsOptional()
+  @IsString()
   phone?: string;
+
+  @IsOptional()
+  @IsString()
   address?: string;
+
+  @IsOptional()
+  @IsString()
   bloodGroup?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
   allergies?: string[];
 }
 
@@ -31,9 +50,9 @@ export class PatientService {
       data: {
         ...(dto.dateOfBirth && { dateOfBirth: new Date(dto.dateOfBirth) }),
         ...(dto.gender && { gender: dto.gender }),
-        ...(dto.phone && { phone: dto.phone }),
-        ...(dto.address && { address: dto.address }),
-        ...(dto.bloodGroup && { bloodGroup: dto.bloodGroup }),
+        ...(dto.phone !== undefined && { phone: dto.phone }),
+        ...(dto.address !== undefined && { address: dto.address }),
+        ...(dto.bloodGroup !== undefined && { bloodGroup: dto.bloodGroup }),
         ...(dto.allergies && { allergies: dto.allergies }),
       },
     });
