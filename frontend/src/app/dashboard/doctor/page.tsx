@@ -168,10 +168,10 @@ export default function DoctorDashboard() {
         {profile && (
           <div className="card mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center text-2xl shrink-0">ðŸ‘¨â€âš•ï¸</div>
+              <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center shrink-0"><svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v11a4 4 0 008 0V3M9 14a4 4 0 008 0" /></svg></div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold text-slate-900">{user?.fullName}</h2>
-                <p className="text-sm text-slate-500">{profile.specialty ?? "General Practice"} Â· {profile.yearsOfExperience ?? 0} yrs experience</p>
+                <p className="text-sm text-slate-500">{profile.specialty ?? "General Practice"} · {profile.yearsOfExperience ?? 0} yrs experience</p>
                 <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{profile.bio ?? "No bio yet"}</p>
               </div>
               <div className="flex sm:flex-col items-start sm:items-end gap-2 flex-wrap">
@@ -185,7 +185,7 @@ export default function DoctorDashboard() {
                     subDaysLeft > 7 ? "bg-blue-50 text-blue-700" :
                     subDaysLeft > 0 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"
                   }`}>
-                    {subDaysLeft > 0 ? `${subscription?.plan} Â· ${subDaysLeft}d left` : "Subscription expired"}
+                    {subDaysLeft > 0 ? `${subscription?.plan} · ${subDaysLeft}d left` : "Subscription expired"}
                   </span>
                 )}
               </div>
@@ -241,7 +241,7 @@ export default function DoctorDashboard() {
                       </p>
                       <p className="text-xs text-slate-500">
                         {appt.availabilitySlot?.startTime
-                          ? format(new Date(appt.availabilitySlot.startTime), "EEEE, MMM d yyyy Â· h:mm a")
+                          ? format(new Date(appt.availabilitySlot.startTime), "EEEE, MMM d yyyy · h:mm a")
                           : "N/A"}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">{appt.reason ?? "General consultation"}</p>
@@ -539,10 +539,10 @@ export default function DoctorDashboard() {
                         <div key={p.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 bg-slate-50 rounded-xl">
                           <div>
                             <p className="text-sm font-medium text-slate-800">
-                              KES {Number(p.amount).toLocaleString()} Â· {p.plan}
+                              KES {Number(p.amount).toLocaleString()} · {p.plan}
                             </p>
                             <p className="text-xs text-slate-500">
-                              {p.mpesaReceiptNo ?? "Pending"} Â· {p.paidAt ? format(new Date(p.paidAt), "MMM d, yyyy") : "â€“"}
+                              {p.mpesaReceiptNo ?? "Pending"} · {p.paidAt ? format(new Date(p.paidAt), "MMM d, yyyy") : "â€“"}
                             </p>
                           </div>
                           <span className={`text-xs px-2.5 py-1 rounded-full font-medium w-fit ${

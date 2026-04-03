@@ -215,7 +215,7 @@ export default function PatientDashboard() {
                       </p>
                       <p className="text-xs text-slate-500">
                         {appt.availabilitySlot?.startTime
-                          ? format(new Date(appt.availabilitySlot.startTime), "EEEE, MMM d yyyy Â· h:mm a")
+                          ? format(new Date(appt.availabilitySlot.startTime), "EEEE, MMM d yyyy · h:mm a")
                           : "N/A"}
                       </p>
                       <p className="text-xs text-slate-400">{appt.reason ?? "General consultation"}</p>
@@ -302,7 +302,7 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
                 {bookingSlot === slot.id ? (
                   <div className="bg-brand-50 border border-brand-100 rounded-xl p-3">
                     <p className="text-xs font-medium text-brand-800 mb-2">
-                      {format(new Date(slot.startTime), "MMM d Â· h:mm a")}
+                      {format(new Date(slot.startTime), "MMM d · h:mm a")}
                     </p>
                     <input value={reason} onChange={(e) => setReason(e.target.value)}
                       placeholder="Reason for visit (optional)" className="input text-xs mb-2 w-full" />
@@ -322,7 +322,7 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
                 ) : (
                   <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                     <p className="text-xs text-slate-700">
-                      {format(new Date(slot.startTime), "MMM d, yyyy Â· h:mm a")}
+                      {format(new Date(slot.startTime), "MMM d, yyyy · h:mm a")}
                     </p>
                     <button onClick={() => setBookingSlot(slot.id)}
                       className="text-xs bg-brand-600 text-white px-3 py-2 rounded-lg hover:bg-brand-700 touch-manipulation">
