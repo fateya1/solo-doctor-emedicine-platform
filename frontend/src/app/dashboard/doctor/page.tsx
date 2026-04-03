@@ -28,8 +28,8 @@ export default function DoctorDashboard() {
   }, [token, _hasHydrated, router]);
 
   const today = new Date();
-  const fromDate = today.toISOString();
-  const toDate = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate()).toISOString();
+  const fromDate = encodeURIComponent(today.toISOString());
+  const toDate = encodeURIComponent(new Date(today.getFullYear(), today.getMonth() + 3, today.getDate()).toISOString());
 
   const { data: profile } = useQuery({
     queryKey: ["doctor-profile", user?.id],
