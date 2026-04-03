@@ -24,13 +24,15 @@ export class VideoService {
   private async createDailyRoom(appointmentId: string): Promise<{ name: string; url: string }> {
     const roomName = `solodoc-${appointmentId}`;
 
+    // Try to delete existing room first to avoid expiry issues
     try {
-      const existing = await axios.get(`${this.dailyBaseUrl}/rooms/${roomName}`, {
+      await axios.delete(`${this.dailyBaseUrl}/rooms/${roomName}`, {
         headers: this.headers,
       });
-      return { name: existing.data.name, url: existing.data.url };
+      this.logger.log(`Deleted existing room ${roomName}`);
     } catch {}
 
+    // Create fresh room with 24hr expiry
     const response = await axios.post(
       `${this.dailyBaseUrl}/rooms`,
       {
@@ -40,14 +42,28 @@ export class VideoService {
           max_participants: 2,
           enable_chat: true,
           enable_screenshare: false,
-          exp: Math.floor(Date.now() / 1000) + 60 * 60 * 4,
-          eject_at_room_exp: true,
+          exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
+          eject_at_room_exp: false,
         },
       },
       { headers: this.headers },
     );
 
+    this.logger.log(`Created room ${roomName}: ${response.data.url}`);
     return { name: response.data.name, url: response.data.url };
+  }
+
+  private async isRoomValid(roomName: string): Promise<boolean> {
+    try {
+      const res = await axios.get(`${this.dailyBaseUrl}/rooms/${roomName}`, {
+        headers: this.headers,
+      });
+      const exp = res.data?.config?.exp;
+      if (!exp) return true;
+      return exp > Math.floor(Date.now() / 1000) + 300; // at least 5 mins remaining
+    } catch {
+      return false;
+    }
   }
 
   async getDoctorVideoToken(appointmentId: string, userId: string) {
@@ -73,7 +89,11 @@ export class VideoService {
     let roomName = appointment.videoRoomName;
     let roomUrl = appointment.videoRoomUrl;
 
-    if (!roomName) {
+    // Check if existing room is still valid
+    const roomValid = roomName ? await this.isRoomValid(roomName) : false;
+
+    if (!roomName || !roomValid) {
+      // Create fresh room
       const room = await this.createDailyRoom(appointmentId);
       roomName = room.name;
       roomUrl = room.url;
@@ -93,7 +113,6 @@ export class VideoService {
       ).catch(() => {});
     }
 
-    // Return room URL without token for public rooms
     return { token: null, roomUrl, roomName };
   }
 
@@ -115,6 +134,12 @@ export class VideoService {
     }
     if (!appointment.videoRoomName) {
       throw new BadRequestException("Doctor has not started the video session yet. Please wait.");
+    }
+
+    // Check if room is still valid for patient too
+    const roomValid = await this.isRoomValid(appointment.videoRoomName);
+    if (!roomValid) {
+      throw new BadRequestException("Video room has expired. Please ask the doctor to restart the session.");
     }
 
     return { token: null, roomUrl: appointment.videoRoomUrl, roomName: appointment.videoRoomName };
