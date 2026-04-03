@@ -17,6 +17,7 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const leftRef = useRef(false);
 
   const [stage, setStage] = useState<Stage>("permissions");
   const [error, setError] = useState("");
@@ -24,7 +25,10 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
   const [camOn, setCamOn] = useState(true);
   const [remoteJoined, setRemoteJoined] = useState(false);
 
+  // Only call onLeave once, triggered by user action
   const leave = useCallback(async () => {
+    if (leftRef.current) return;
+    leftRef.current = true;
     try {
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(t => t.stop());
@@ -39,31 +43,16 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
     onLeave();
   }, [onLeave]);
 
-  // Step 1: Request permissions first, show local preview
-  const requestPermissions = useCallback(async () => {
-    setStage("permissions");
-    setError("");
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      localStreamRef.current = stream;
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
-      // Permissions granted — now join the call
-      joinCall(stream);
-    } catch (err: any) {
-      setError(
-        err?.name === "NotAllowedError"
-          ? "Camera and microphone access was denied. Please allow access in your browser settings and try again."
-          : err?.name === "NotFoundError"
-          ? "No camera or microphone found. Please connect a device and try again."
-          : "Could not access camera/microphone: " + (err?.message ?? "Unknown error")
-      );
-      setStage("error");
+  const attachRemote = useCallback((participant: any) => {
+    if (!participant || participant.local) return;
+    if (participant.videoTrack && remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = new MediaStream([participant.videoTrack]);
+    }
+    if (participant.audioTrack && remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = new MediaStream([participant.audioTrack]);
     }
   }, []);
 
-  // Step 2: Join Daily room after permissions granted
   const joinCall = useCallback(async (stream: MediaStream) => {
     setStage("connecting");
     try {
@@ -106,7 +95,8 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
         if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
       });
 
-      call.on("left-meeting", () => onLeave());
+      // Do NOT call onLeave here - only user action should trigger leave
+      call.on("left-meeting", () => {});
 
       call.on("error", (e: any) => {
         setError(e?.errorMsg ?? "Video call error occurred.");
@@ -119,28 +109,42 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
       setError(err?.message ?? "Failed to connect to video call.");
       setStage("error");
     }
-  }, [roomUrl, token, onLeave]);
+  }, [roomUrl, token, attachRemote]);
 
-  const attachRemote = (participant: any) => {
-    if (!participant || participant.local) return;
-    if (participant.videoTrack && remoteVideoRef.current) {
-      remoteVideoRef.current.srcObject = new MediaStream([participant.videoTrack]);
+  const requestPermissions = useCallback(async () => {
+    setStage("permissions");
+    setError("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      localStreamRef.current = stream;
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+      joinCall(stream);
+    } catch (err: any) {
+      setError(
+        err?.name === "NotAllowedError"
+          ? "Camera and microphone access was denied. Please allow access in your browser settings and try again."
+          : err?.name === "NotFoundError"
+          ? "No camera or microphone found. Please connect a device and try again."
+          : "Could not access camera/microphone: " + (err?.message ?? "Unknown error")
+      );
+      setStage("error");
     }
-    if (participant.audioTrack && remoteAudioRef.current) {
-      remoteAudioRef.current.srcObject = new MediaStream([participant.audioTrack]);
-    }
-  };
+  }, [joinCall]);
 
-  // Auto-request permissions on mount
   useEffect(() => {
     requestPermissions();
+    // Cleanup only stops tracks/call without triggering onLeave
     return () => {
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(t => t.stop());
+        localStreamRef.current = null;
       }
       if (callRef.current) {
         callRef.current.leave().catch(() => {});
         callRef.current.destroy().catch(() => {});
+        callRef.current = null;
       }
     };
   }, []);
@@ -177,7 +181,6 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
       {/* Main content */}
       <div className="flex-1 relative overflow-hidden bg-slate-900 p-4">
 
-        {/* Permissions stage */}
         {stage === "permissions" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 z-10 p-6">
             <div className="w-20 h-20 bg-slate-700 rounded-full flex items-center justify-center">
@@ -193,7 +196,6 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
           </div>
         )}
 
-        {/* Connecting stage */}
         {stage === "connecting" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-10">
             <Loader2 className="w-10 h-10 animate-spin text-blue-400" />
@@ -201,29 +203,21 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
           </div>
         )}
 
-        {/* Error stage */}
         {stage === "error" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-10 p-6">
             <AlertCircle className="w-12 h-12 text-red-400" />
             <p className="text-red-300 text-center max-w-sm">{error}</p>
             <div className="flex gap-3">
-              <button
-                onClick={requestPermissions}
-                className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-500"
-              >
+              <button onClick={requestPermissions} className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-500">
                 Try Again
               </button>
-              <button
-                onClick={onLeave}
-                className="px-6 py-2 bg-slate-700 text-white rounded-xl hover:bg-slate-600"
-              >
+              <button onClick={onLeave} className="px-6 py-2 bg-slate-700 text-white rounded-xl hover:bg-slate-600">
                 Close
               </button>
             </div>
           </div>
         )}
 
-        {/* Remote video */}
         <video
           ref={remoteVideoRef}
           autoPlay
@@ -231,7 +225,6 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
           className={`w-full h-full object-cover rounded-xl ${stage !== "connected" || !remoteJoined ? "hidden" : ""}`}
         />
 
-        {/* Waiting for remote participant */}
         {stage === "connected" && !remoteJoined && (
           <div className="w-full h-full flex flex-col items-center justify-center gap-3">
             <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center">
@@ -241,56 +234,31 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
           </div>
         )}
 
-        {/* Local video PiP */}
         <div className={`absolute bottom-4 right-4 w-36 h-28 sm:w-48 sm:h-36 rounded-xl overflow-hidden border-2 border-slate-600 shadow-xl bg-slate-800 ${stage === "error" || stage === "permissions" ? "hidden" : ""}`}>
-          <video
-            ref={localVideoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover"
-          />
+          <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
           {!camOn && (
             <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
               <VideoOff className="w-6 h-6 text-slate-400" />
             </div>
           )}
-          <div className="absolute bottom-1 left-1 text-white text-xs bg-black/60 px-1.5 py-0.5 rounded">
-            You
-          </div>
+          <div className="absolute bottom-1 left-1 text-white text-xs bg-black/60 px-1.5 py-0.5 rounded">You</div>
         </div>
 
         <audio ref={remoteAudioRef} autoPlay />
       </div>
 
-      {/* Controls - only show when connected */}
       {stage === "connected" && (
         <div className="flex items-center justify-center gap-4 py-5 bg-slate-800 border-t border-slate-700">
-          <button
-            onClick={toggleMic}
-            title={micOn ? "Mute" : "Unmute"}
-            className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-              micOn ? "bg-slate-600 hover:bg-slate-500 text-white" : "bg-red-600 hover:bg-red-500 text-white"
-            }`}
-          >
+          <button onClick={toggleMic} title={micOn ? "Mute" : "Unmute"}
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${micOn ? "bg-slate-600 hover:bg-slate-500 text-white" : "bg-red-600 hover:bg-red-500 text-white"}`}>
             {micOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
           </button>
-
-          <button
-            onClick={toggleCam}
-            title={camOn ? "Turn off camera" : "Turn on camera"}
-            className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-              camOn ? "bg-slate-600 hover:bg-slate-500 text-white" : "bg-red-600 hover:bg-red-500 text-white"
-            }`}
-          >
+          <button onClick={toggleCam} title={camOn ? "Turn off camera" : "Turn on camera"}
+            className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${camOn ? "bg-slate-600 hover:bg-slate-500 text-white" : "bg-red-600 hover:bg-red-500 text-white"}`}>
             {camOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
           </button>
-
-          <button
-            onClick={leave}
-            title="Leave call"
-            className="w-14 h-14 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center transition-colors"
-          >
+          <button onClick={leave} title="Leave call"
+            className="w-14 h-14 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center transition-colors">
             <PhoneOff className="w-6 h-6" />
           </button>
         </div>

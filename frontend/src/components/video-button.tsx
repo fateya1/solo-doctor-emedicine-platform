@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState } from "react";
 import { Video, Loader2 } from "lucide-react";
 import { apiClient } from "@/lib/api";
@@ -25,7 +25,6 @@ export function VideoButton({ appointmentId, role, disabled }: VideoButtonProps)
         role === "doctor"
           ? `/video/doctor/${appointmentId}/token`
           : `/video/patient/${appointmentId}/token`;
-
       const res = await apiClient.post(endpoint);
       setCallData({ token: res.data.token, roomUrl: res.data.roomUrl });
     } catch (err: any) {
@@ -35,13 +34,18 @@ export function VideoButton({ appointmentId, role, disabled }: VideoButtonProps)
     }
   };
 
+  // Only closes the modal — does NOT log out
+  const handleLeave = () => {
+    setCallData(null);
+  };
+
   if (callData) {
     return (
       <VideoCall
         token={callData.token}
         roomUrl={callData.roomUrl}
         participantName={user?.fullName ?? "Participant"}
-        onLeave={() => setCallData(null)}
+        onLeave={handleLeave}
       />
     );
   }
