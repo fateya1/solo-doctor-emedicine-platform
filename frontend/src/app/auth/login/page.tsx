@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,23 +29,30 @@ export default function LoginPage() {
     setError("");
     try {
       const res = await apiClient.post("/auth/login", data);
-      setAuth(res.data.accessToken, res.data.user);
-      const role = res.data.user.role;
+      const { accessToken, user } = res.data;
+
+      // 1. Write auth state into the store (this also persists to localStorage)
+      setAuth(accessToken, user);
+
+      // 2. Give Zustand persist one tick to flush to localStorage before navigating
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      const role = user.role;
       if (role === "DOCTOR") {
         try {
           const status = await apiClient.get("/onboarding/status");
           if (!status.data.isComplete) {
-            router.push("/onboarding");
+            router.replace("/onboarding");
             return;
           }
         } catch {}
-        router.push("/dashboard/doctor");
+        router.replace("/dashboard/doctor");
       } else if (role === "PATIENT") {
-        router.push("/dashboard/patient");
+        router.replace("/dashboard/patient");
       } else if (role === "ADMIN") {
-        router.push("/dashboard/admin");
+        router.replace("/dashboard/admin");
       } else {
-        router.push("/");
+        router.replace("/");
       }
     } catch (err: any) {
       const message = err.response?.data?.message || "Invalid credentials. Please try again.";
@@ -97,6 +104,9 @@ export default function LoginPage() {
           <p className="text-center text-sm text-slate-500 mt-6">
             Don&apos;t have an account?{" "}
             <Link href="/auth/register" className="text-brand-600 font-medium hover:underline">Sign up</Link>
+          </p>
+          <p className="text-center text-sm text-slate-500 mt-2">
+            <Link href="/auth/forgot-password" className="text-brand-600 font-medium hover:underline">Forgot password?</Link>
           </p>
         </div>
       </div>
