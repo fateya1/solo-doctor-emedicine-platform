@@ -14,7 +14,7 @@ interface VideoButtonProps {
 export function VideoButton({ appointmentId, role, disabled }: VideoButtonProps) {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
-  const [callData, setCallData] = useState<{ token: string; roomUrl: string } | null>(null);
+  const [callData, setCallData] = useState<{ token: string | null; roomUrl: string } | null>(null);
   const [error, setError] = useState("");
 
   const startCall = async () => {
@@ -26,7 +26,7 @@ export function VideoButton({ appointmentId, role, disabled }: VideoButtonProps)
           ? `/video/doctor/${appointmentId}/token`
           : `/video/patient/${appointmentId}/token`;
       const res = await apiClient.post(endpoint);
-      setCallData({ token: res.data.token, roomUrl: res.data.roomUrl });
+      setCallData({ token: res.data.token ?? null, roomUrl: res.data.roomUrl });
     } catch (err: any) {
       setError(err.response?.data?.message ?? "Failed to start video call");
     } finally {
@@ -34,10 +34,7 @@ export function VideoButton({ appointmentId, role, disabled }: VideoButtonProps)
     }
   };
 
-  // Only closes the modal — does NOT log out
-  const handleLeave = () => {
-    setCallData(null);
-  };
+  const handleLeave = () => setCallData(null);
 
   if (callData) {
     return (
@@ -62,7 +59,7 @@ export function VideoButton({ appointmentId, role, disabled }: VideoButtonProps)
           ? loading ? "Starting..." : "Start Video"
           : loading ? "Joining..." : "Join Video"}
       </button>
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-red-500 max-w-xs">{error}</p>}
     </div>
   );
 }

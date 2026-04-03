@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Mic, MicOff, Video, VideoOff, PhoneOff, Loader2, AlertCircle, Users, Camera } from "lucide-react";
 
 interface VideoCallProps {
-  token: string;
+  token: string | null;
   roomUrl: string;
   onLeave: () => void;
   participantName: string;
@@ -11,17 +11,12 @@ interface VideoCallProps {
 
 type Stage = "permissions" | "connecting" | "connected" | "error";
 
-// Global singleton to prevent duplicate Daily instances
 let globalCallInstance: any = null;
 
 async function destroyGlobalInstance() {
   if (globalCallInstance) {
-    try {
-      await globalCallInstance.leave();
-    } catch {}
-    try {
-      await globalCallInstance.destroy();
-    } catch {}
+    try { await globalCallInstance.leave(); } catch {}
+    try { await globalCallInstance.destroy(); } catch {}
     globalCallInstance = null;
   }
 }
@@ -64,7 +59,6 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
     setStage("connecting");
 
     try {
-      // Always destroy any existing instance first
       await destroyGlobalInstance();
 
       const { default: DailyIframe } = await import("@daily-co/daily-js");
@@ -116,10 +110,13 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
         setStage("error");
       });
 
-      // Do not wire left-meeting to onLeave — only user action does that
       call.on("left-meeting", () => {});
 
-      await call.join({ url: roomUrl, token });
+      // Join without token for public rooms
+      const joinOptions: any = { url: roomUrl };
+      if (token) joinOptions.token = token;
+
+      await call.join(joinOptions);
 
     } catch (err: any) {
       if (!mountedRef.current) return;
@@ -159,16 +156,12 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
   useEffect(() => {
     mountedRef.current = true;
     requestPermissions();
-
     return () => {
       mountedRef.current = false;
-      // Stop local stream tracks
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(t => t.stop());
         localStreamRef.current = null;
       }
-      // Do NOT destroy global instance here — only destroy on explicit leave
-      // This prevents the duplicate instance error on React StrictMode double-mount
     };
   }, []);
 
@@ -186,7 +179,6 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900 flex flex-col">
-      {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 bg-slate-800 border-b border-slate-700">
         <div className="flex items-center gap-3">
           <div className={`w-2 h-2 rounded-full ${stage === "connected" ? "bg-green-400 animate-pulse" : "bg-amber-400"}`} />
@@ -201,7 +193,6 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
         </div>
       </div>
 
-      {/* Main content */}
       <div className="flex-1 relative overflow-hidden bg-slate-900 p-4">
 
         {stage === "permissions" && (
@@ -241,7 +232,6 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
           </div>
         )}
 
-        {/* Remote video - full screen */}
         <video
           ref={remoteVideoRef}
           autoPlay
@@ -249,7 +239,6 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
           className={`w-full h-full object-cover rounded-xl ${stage !== "connected" || !remoteJoined ? "hidden" : ""}`}
         />
 
-        {/* Waiting for remote */}
         {stage === "connected" && !remoteJoined && (
           <div className="w-full h-full flex flex-col items-center justify-center gap-3">
             <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center">
@@ -259,7 +248,6 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
           </div>
         )}
 
-        {/* Local video PiP */}
         <div className={`absolute bottom-4 right-4 w-36 h-28 sm:w-48 sm:h-36 rounded-xl overflow-hidden border-2 border-slate-600 shadow-xl bg-slate-800 ${stage === "error" || stage === "permissions" ? "hidden" : ""}`}>
           <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
           {!camOn && (
@@ -273,7 +261,6 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
         <audio ref={remoteAudioRef} autoPlay />
       </div>
 
-      {/* Controls */}
       {stage === "connected" && (
         <div className="flex items-center justify-center gap-4 py-5 bg-slate-800 border-t border-slate-700">
           <button onClick={toggleMic} title={micOn ? "Mute" : "Unmute"}
