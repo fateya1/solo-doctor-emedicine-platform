@@ -11,13 +11,27 @@ interface VideoCallProps {
 
 type Stage = "permissions" | "connecting" | "connected" | "error";
 
+// Global singleton to prevent duplicate Daily instances
+let globalCallInstance: any = null;
+
+async function destroyGlobalInstance() {
+  if (globalCallInstance) {
+    try {
+      await globalCallInstance.leave();
+    } catch {}
+    try {
+      await globalCallInstance.destroy();
+    } catch {}
+    globalCallInstance = null;
+  }
+}
+
 export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCallProps) {
-  const callRef = useRef<any>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
-  const leftRef = useRef(false);
+  const mountedRef = useRef(true);
 
   const [stage, setStage] = useState<Stage>("permissions");
   const [error, setError] = useState("");
@@ -25,21 +39,13 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
   const [camOn, setCamOn] = useState(true);
   const [remoteJoined, setRemoteJoined] = useState(false);
 
-  // Only call onLeave once, triggered by user action
-  const leave = useCallback(async () => {
-    if (leftRef.current) return;
-    leftRef.current = true;
-    try {
-      if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach(t => t.stop());
-        localStreamRef.current = null;
-      }
-      if (callRef.current) {
-        await callRef.current.leave();
-        await callRef.current.destroy();
-        callRef.current = null;
-      }
-    } catch {}
+  const handleLeave = useCallback(async () => {
+    mountedRef.current = false;
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(t => t.stop());
+      localStreamRef.current = null;
+    }
+    await destroyGlobalInstance();
     onLeave();
   }, [onLeave]);
 
@@ -54,21 +60,27 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
   }, []);
 
   const joinCall = useCallback(async (stream: MediaStream) => {
+    if (!mountedRef.current) return;
     setStage("connecting");
+
     try {
+      // Always destroy any existing instance first
+      await destroyGlobalInstance();
+
       const { default: DailyIframe } = await import("@daily-co/daily-js");
 
       const videoTrack = stream.getVideoTracks()[0];
       const audioTrack = stream.getAudioTracks()[0];
 
       const call = DailyIframe.createCallObject({
-        videoSource: videoTrack,
-        audioSource: audioTrack,
+        videoSource: videoTrack || true,
+        audioSource: audioTrack || true,
       });
 
-      callRef.current = call;
+      globalCallInstance = call;
 
       call.on("joined-meeting", () => {
+        if (!mountedRef.current) return;
         setStage("connected");
         const local = call.participants().local;
         if (local?.videoTrack && localVideoRef.current) {
@@ -77,54 +89,65 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
       });
 
       call.on("participant-joined", (evt: any) => {
+        if (!mountedRef.current) return;
         setRemoteJoined(true);
         attachRemote(evt.participant);
       });
 
       call.on("participant-updated", (evt: any) => {
-        if (evt.participant.local) return;
+        if (!mountedRef.current || evt.participant.local) return;
         attachRemote(evt.participant);
       });
 
       call.on("track-started", (evt: any) => {
-        if (!evt.participant.local) attachRemote(evt.participant);
+        if (!mountedRef.current || evt.participant?.local) return;
+        attachRemote(evt.participant);
       });
 
       call.on("participant-left", () => {
+        if (!mountedRef.current) return;
         setRemoteJoined(false);
         if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
       });
 
-      // Do NOT call onLeave here - only user action should trigger leave
-      call.on("left-meeting", () => {});
-
       call.on("error", (e: any) => {
+        if (!mountedRef.current) return;
         setError(e?.errorMsg ?? "Video call error occurred.");
         setStage("error");
       });
 
+      // Do not wire left-meeting to onLeave — only user action does that
+      call.on("left-meeting", () => {});
+
       await call.join({ url: roomUrl, token });
 
     } catch (err: any) {
+      if (!mountedRef.current) return;
       setError(err?.message ?? "Failed to connect to video call.");
       setStage("error");
     }
   }, [roomUrl, token, attachRemote]);
 
   const requestPermissions = useCallback(async () => {
+    if (!mountedRef.current) return;
     setStage("permissions");
     setError("");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      if (!mountedRef.current) {
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
       localStreamRef.current = stream;
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
-      joinCall(stream);
+      await joinCall(stream);
     } catch (err: any) {
+      if (!mountedRef.current) return;
       setError(
         err?.name === "NotAllowedError"
-          ? "Camera and microphone access was denied. Please allow access in your browser settings and try again."
+          ? "Camera/microphone access denied. Please allow access in browser settings and try again."
           : err?.name === "NotFoundError"
           ? "No camera or microphone found. Please connect a device and try again."
           : "Could not access camera/microphone: " + (err?.message ?? "Unknown error")
@@ -134,30 +157,30 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
   }, [joinCall]);
 
   useEffect(() => {
+    mountedRef.current = true;
     requestPermissions();
-    // Cleanup only stops tracks/call without triggering onLeave
+
     return () => {
+      mountedRef.current = false;
+      // Stop local stream tracks
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(t => t.stop());
         localStreamRef.current = null;
       }
-      if (callRef.current) {
-        callRef.current.leave().catch(() => {});
-        callRef.current.destroy().catch(() => {});
-        callRef.current = null;
-      }
+      // Do NOT destroy global instance here — only destroy on explicit leave
+      // This prevents the duplicate instance error on React StrictMode double-mount
     };
   }, []);
 
   const toggleMic = async () => {
-    if (!callRef.current) return;
-    await callRef.current.setLocalAudio(!micOn);
+    if (!globalCallInstance) return;
+    await globalCallInstance.setLocalAudio(!micOn);
     setMicOn(!micOn);
   };
 
   const toggleCam = async () => {
-    if (!callRef.current) return;
-    await callRef.current.setLocalVideo(!camOn);
+    if (!globalCallInstance) return;
+    await globalCallInstance.setLocalVideo(!camOn);
     setCamOn(!camOn);
   };
 
@@ -211,13 +234,14 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
               <button onClick={requestPermissions} className="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-500">
                 Try Again
               </button>
-              <button onClick={onLeave} className="px-6 py-2 bg-slate-700 text-white rounded-xl hover:bg-slate-600">
+              <button onClick={handleLeave} className="px-6 py-2 bg-slate-700 text-white rounded-xl hover:bg-slate-600">
                 Close
               </button>
             </div>
           </div>
         )}
 
+        {/* Remote video - full screen */}
         <video
           ref={remoteVideoRef}
           autoPlay
@@ -225,6 +249,7 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
           className={`w-full h-full object-cover rounded-xl ${stage !== "connected" || !remoteJoined ? "hidden" : ""}`}
         />
 
+        {/* Waiting for remote */}
         {stage === "connected" && !remoteJoined && (
           <div className="w-full h-full flex flex-col items-center justify-center gap-3">
             <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center">
@@ -234,6 +259,7 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
           </div>
         )}
 
+        {/* Local video PiP */}
         <div className={`absolute bottom-4 right-4 w-36 h-28 sm:w-48 sm:h-36 rounded-xl overflow-hidden border-2 border-slate-600 shadow-xl bg-slate-800 ${stage === "error" || stage === "permissions" ? "hidden" : ""}`}>
           <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
           {!camOn && (
@@ -247,6 +273,7 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
         <audio ref={remoteAudioRef} autoPlay />
       </div>
 
+      {/* Controls */}
       {stage === "connected" && (
         <div className="flex items-center justify-center gap-4 py-5 bg-slate-800 border-t border-slate-700">
           <button onClick={toggleMic} title={micOn ? "Mute" : "Unmute"}
@@ -257,7 +284,7 @@ export function VideoCall({ token, roomUrl, onLeave, participantName }: VideoCal
             className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${camOn ? "bg-slate-600 hover:bg-slate-500 text-white" : "bg-red-600 hover:bg-red-500 text-white"}`}>
             {camOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
           </button>
-          <button onClick={leave} title="Leave call"
+          <button onClick={handleLeave} title="Leave call"
             className="w-14 h-14 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center transition-colors">
             <PhoneOff className="w-6 h-6" />
           </button>
