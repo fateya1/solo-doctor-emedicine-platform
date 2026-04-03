@@ -33,9 +33,16 @@ export class DoctorService {
     });
   }
 
-  async getDoctorPublicProfile(doctorProfileId: string) {
-    const profile = await this.prisma.doctorProfile.findUnique({
-      where: { id: doctorProfileId },
+  async getDoctorPublicProfile(idOrSlug: string) {
+    // Support lookup by profile ID or tenant slug
+    const profile = await this.prisma.doctorProfile.findFirst({
+      where: {
+        OR: [
+          { id: idOrSlug },
+          { user: { tenant: { slug: idOrSlug } } },
+        ],
+        isVerified: true,
+      },
       include: {
         user: { select: { fullName: true } },
         availabilitySlots: {

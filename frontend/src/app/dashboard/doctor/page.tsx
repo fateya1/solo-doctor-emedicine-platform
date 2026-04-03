@@ -4,13 +4,14 @@ import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar, Users, Clock, LogOut, Stethoscope, Plus, Loader2,
-  CheckCircle, XCircle, AlertCircle, CreditCard, TrendingUp
+  CheckCircle, XCircle, AlertCircle, CreditCard, TrendingUp,
+  BarChart2, ArrowUp, ArrowDown
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 
-type Tab = "appointments" | "slots" | "subscription";
+type Tab = "appointments" | "slots" | "analytics" | "subscription";
 
 export default function DoctorDashboard() {
   const { user, token, logout, _hasHydrated } = useAuthStore();
@@ -37,7 +38,7 @@ export default function DoctorDashboard() {
 
   const doctorProfileId = profile?.id;
 
-  const { data: appointments, refetch: refetchAppointments } = useQuery({
+  const { data: appointments } = useQuery({
     queryKey: ["doctor-appointments"],
     queryFn: () => apiClient.get("/appointments/doctor").then((r) => r.data),
     enabled: !!token && _hasHydrated,
@@ -54,6 +55,12 @@ export default function DoctorDashboard() {
     queryKey: ["my-subscription"],
     queryFn: () => apiClient.get("/subscription/my").then((r) => r.data),
     enabled: !!token && _hasHydrated,
+  });
+
+  const { data: analytics } = useQuery({
+    queryKey: ["doctor-analytics"],
+    queryFn: () => apiClient.get("/doctor/analytics").then((r) => r.data),
+    enabled: !!token && _hasHydrated && tab === "analytics",
   });
 
   const addSlotMutation = useMutation({
@@ -74,9 +81,7 @@ export default function DoctorDashboard() {
       setSlotDate("");
       setSlotTime("09:00");
     },
-    onError: (err: any) => {
-      alert(err.response?.data?.message || "Failed to add slot.");
-    },
+    onError: (err: any) => alert(err.response?.data?.message || "Failed to add slot."),
   });
 
   const updateStatusMutation = useMutation({
@@ -110,9 +115,14 @@ export default function DoctorDashboard() {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "appointments", label: "Appointments" },
-    { key: "slots", label: "Availability Slots" },
+    { key: "slots", label: "Availability" },
+    { key: "analytics", label: "Analytics" },
     { key: "subscription", label: "Subscription" },
   ];
+
+  const maxBar = analytics?.monthlyTrend
+    ? Math.max(...analytics.monthlyTrend.map((m: any) => m.appointments), 1)
+    : 1;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -154,8 +164,7 @@ export default function DoctorDashboard() {
               {subDaysLeft !== null && (
                 <span className={`text-xs font-medium px-3 py-1 rounded-full ${
                   subDaysLeft > 7 ? "bg-blue-50 text-blue-700" :
-                  subDaysLeft > 0 ? "bg-amber-50 text-amber-700" :
-                  "bg-red-50 text-red-600"
+                  subDaysLeft > 0 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"
                 }`}>
                   {subDaysLeft > 0 ? `${subscription?.plan} · ${subDaysLeft}d left` : "Subscription expired"}
                 </span>
@@ -225,25 +234,19 @@ export default function DoctorDashboard() {
                       }`}>{appt.status}</span>
                       {appt.status === "CONFIRMED" && (
                         <div className="flex gap-1">
-                          <button
-                            onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "COMPLETED" })}
-                            disabled={updateStatusMutation.isPending}
-                            title="Mark as completed"
-                            className="w-7 h-7 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors">
+                          <button onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "COMPLETED" })}
+                            disabled={updateStatusMutation.isPending} title="Mark completed"
+                            className="w-7 h-7 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100">
                             <CheckCircle className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "NO_SHOW" })}
-                            disabled={updateStatusMutation.isPending}
-                            title="Mark as no-show"
-                            className="w-7 h-7 flex items-center justify-center bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors">
+                          <button onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "NO_SHOW" })}
+                            disabled={updateStatusMutation.isPending} title="Mark no-show"
+                            className="w-7 h-7 flex items-center justify-center bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100">
                             <AlertCircle className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "CANCELLED" })}
-                            disabled={updateStatusMutation.isPending}
-                            title="Cancel appointment"
-                            className="w-7 h-7 flex items-center justify-center bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors">
+                          <button onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "CANCELLED" })}
+                            disabled={updateStatusMutation.isPending} title="Cancel"
+                            className="w-7 h-7 flex items-center justify-center bg-red-50 text-red-500 rounded-lg hover:bg-red-100">
                             <XCircle className="w-4 h-4" />
                           </button>
                         </div>
@@ -266,7 +269,6 @@ export default function DoctorDashboard() {
                 <Plus className="w-4 h-4" /> Add slot
               </button>
             </div>
-
             {showAddSlot && (
               <div className="bg-brand-50 border border-brand-100 rounded-xl p-4 mb-5">
                 <h3 className="text-sm font-medium text-brand-800 mb-3">New availability slot (1 hour)</h3>
@@ -284,7 +286,6 @@ export default function DoctorDashboard() {
                 </div>
               </div>
             )}
-
             {!slots?.length ? (
               <p className="text-slate-400 text-sm">No slots added yet.</p>
             ) : (
@@ -298,11 +299,6 @@ export default function DoctorDashboard() {
                       <p className="text-xs text-slate-500">
                         {format(new Date(slot.startTime), "h:mm a")} – {format(new Date(slot.endTime), "h:mm a")}
                       </p>
-                      {slot.appointment && (
-                        <p className="text-xs text-brand-600 mt-0.5">
-                          Patient booked
-                        </p>
-                      )}
                     </div>
                     <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
                       !slot.appointment ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"
@@ -312,6 +308,158 @@ export default function DoctorDashboard() {
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+        )}
+
+        {/* Analytics Tab */}
+        {tab === "analytics" && (
+          <div className="space-y-6">
+            {!analytics ? (
+              <div className="card flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
+              </div>
+            ) : (
+              <>
+                {/* KPI cards */}
+                <div className="grid grid-cols-4 gap-4">
+                  {[
+                    {
+                      label: "This month",
+                      value: analytics.appointmentsThisMonth,
+                      sub: `vs ${analytics.appointmentsLastMonth} last month`,
+                      trend: analytics.growthRate,
+                      color: "bg-brand-50 text-brand-600",
+                      icon: Calendar,
+                    },
+                    {
+                      label: "Revenue this month",
+                      value: `KES ${analytics.revenueThisMonth.toLocaleString()}`,
+                      sub: `KES ${analytics.revenueLastMonth.toLocaleString()} last month`,
+                      trend: analytics.growthRate,
+                      color: "bg-green-50 text-green-600",
+                      icon: TrendingUp,
+                    },
+                    {
+                      label: "Completion rate",
+                      value: `${analytics.completionRate}%`,
+                      sub: `${analytics.completedAppointments} completed`,
+                      trend: null,
+                      color: "bg-blue-50 text-blue-600",
+                      icon: CheckCircle,
+                    },
+                    {
+                      label: "Slot utilization",
+                      value: `${analytics.slotUtilization}%`,
+                      sub: "of slots booked",
+                      trend: null,
+                      color: "bg-purple-50 text-purple-600",
+                      icon: BarChart2,
+                    },
+                  ].map(({ label, value, sub, trend, color, icon: Icon }) => (
+                    <div key={label} className="card">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${color}`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <p className="text-xl font-bold text-slate-900">{value}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{label}</p>
+                      <div className="flex items-center gap-1 mt-2">
+                        {trend !== null && trend !== undefined && (
+                          <span className={`flex items-center gap-0.5 text-xs font-medium ${
+                            trend >= 0 ? "text-green-600" : "text-red-500"
+                          }`}>
+                            {trend >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                            {Math.abs(trend)}%
+                          </span>
+                        )}
+                        <span className="text-xs text-slate-400">{sub}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Monthly trend bar chart */}
+                <div className="card">
+                  <h3 className="font-semibold text-slate-900 mb-6">Appointments — last 6 months</h3>
+                  <div className="flex items-end gap-3 h-40">
+                    {analytics.monthlyTrend.map((m: any) => (
+                      <div key={m.month} className="flex-1 flex flex-col items-center gap-2">
+                        <p className="text-xs font-medium text-slate-600">{m.appointments}</p>
+                        <div className="w-full bg-slate-100 rounded-t-lg relative" style={{ height: "100px" }}>
+                          <div
+                            className="w-full bg-brand-500 rounded-t-lg absolute bottom-0 transition-all"
+                            style={{ height: `${Math.max((m.appointments / maxBar) * 100, m.appointments > 0 ? 8 : 0)}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-slate-500">{m.month}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Revenue trend */}
+                <div className="card">
+                  <h3 className="font-semibold text-slate-900 mb-4">Revenue — last 6 months</h3>
+                  <div className="space-y-3">
+                    {analytics.monthlyTrend.map((m: any) => {
+                      const maxRevenue = Math.max(...analytics.monthlyTrend.map((x: any) => x.revenue), 1);
+                      const pct = Math.round((m.revenue / maxRevenue) * 100);
+                      return (
+                        <div key={m.month} className="flex items-center gap-4">
+                          <p className="text-sm text-slate-600 w-8">{m.month}</p>
+                          <div className="flex-1 bg-slate-100 rounded-full h-2">
+                            <div className="bg-green-500 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                          <p className="text-sm font-medium text-slate-800 w-28 text-right">
+                            KES {m.revenue.toLocaleString()}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Appointment breakdown */}
+                <div className="grid grid-cols-2 gap-5">
+                  <div className="card">
+                    <h3 className="font-semibold text-slate-900 mb-4">Appointment breakdown</h3>
+                    <div className="space-y-3">
+                      {[
+                        { label: "Completed", value: analytics.completedAppointments, color: "bg-blue-500" },
+                        { label: "Cancelled", value: analytics.cancelledAppointments, color: "bg-red-400" },
+                        { label: "No-show", value: analytics.noShowAppointments, color: "bg-amber-400" },
+                      ].map(({ label, value, color }) => {
+                        const pct = analytics.totalAppointments > 0
+                          ? Math.round((value / analytics.totalAppointments) * 100) : 0;
+                        return (
+                          <div key={label}>
+                            <div className="flex justify-between text-xs text-slate-600 mb-1">
+                              <span>{label}</span>
+                              <span>{value} ({pct}%)</span>
+                            </div>
+                            <div className="bg-slate-100 rounded-full h-2">
+                              <div className={`${color} h-2 rounded-full`} style={{ width: `${pct}%` }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="card">
+                    <h3 className="font-semibold text-slate-900 mb-4">Total revenue</h3>
+                    <div className="flex flex-col items-center justify-center h-28">
+                      <p className="text-3xl font-bold text-green-600">
+                        KES {analytics.revenueTotal.toLocaleString()}
+                      </p>
+                      <p className="text-sm text-slate-500 mt-1">from {analytics.completedAppointments} completed sessions</p>
+                      {analytics.consultationFee > 0 && (
+                        <p className="text-xs text-slate-400 mt-1">@ KES {Number(analytics.consultationFee).toLocaleString()} per session</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         )}
@@ -343,7 +491,6 @@ export default function DoctorDashboard() {
                     </div>
                   ))}
                 </div>
-
                 <div className="bg-slate-50 rounded-xl p-4">
                   <p className="text-xs text-slate-500 mb-1">Billing period</p>
                   <p className="text-sm font-medium text-slate-800">
@@ -351,7 +498,6 @@ export default function DoctorDashboard() {
                     {format(new Date(subscription.currentPeriodEnd), "MMM d, yyyy")}
                   </p>
                 </div>
-
                 {subDaysLeft !== null && subDaysLeft <= 7 && (
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                     <p className="text-sm text-amber-800 font-medium">⚠️ Your subscription expires soon</p>
@@ -362,7 +508,6 @@ export default function DoctorDashboard() {
                     </button>
                   </div>
                 )}
-
                 {subscription.payments?.length > 0 && (
                   <div>
                     <h3 className="text-sm font-semibold text-slate-800 mb-3">Recent payments</h3>

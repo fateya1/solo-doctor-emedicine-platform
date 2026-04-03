@@ -178,4 +178,27 @@ export class EmailService {
       `,
     });
   }
+  async sendSubscriptionRenewalReminder(
+    to: string,
+    fullName: string,
+    plan: string,
+    expiryDate: Date,
+    daysLeft: number,
+  ): Promise<void> {
+    const dateStr = expiryDate.toLocaleDateString("en-KE", { dateStyle: "full" });
+    await this.send({
+      to,
+      subject: `Your SoloDoc subscription expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;">
+          <h1 style="color:#d97706;">Subscription Expiring Soon</h1>
+          <p>Hi Dr. ${fullName},</p>
+          <p>Your <strong>${plan}</strong> plan expires on <strong>${dateStr}</strong> (${daysLeft} day${daysLeft === 1 ? "" : "s"} remaining).</p>
+          <p>Renew now to keep your account active and continue accepting patients without interruption.</p>
+          <a href="${process.env.FRONTEND_URL}/dashboard/doctor" style="background:#0284c7;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:16px;">Renew Subscription</a>
+          <p style="color:#64748b;margin-top:32px;font-size:14px;">The SoloDoc Team</p>
+        </div>
+      `,
+    });
+  }
 }
