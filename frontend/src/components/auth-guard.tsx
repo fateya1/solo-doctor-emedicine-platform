@@ -2,10 +2,11 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore, useHydrationStore } from "@/store/auth";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { token, _hasHydrated } = useAuthStore();
+  const { token } = useAuthStore();
+  const { _hasHydrated } = useHydrationStore();
   const router = useRouter();
 
   useEffect(() => {
@@ -14,7 +15,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [_hasHydrated, token, router]);
 
-  // Still rehydrating from localStorage — show spinner
   if (!_hasHydrated) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -23,7 +23,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Hydrated but no token — redirect is in flight, show nothing
   if (!token) return null;
 
   return <>{children}</>;

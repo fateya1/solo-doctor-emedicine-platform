@@ -1,16 +1,17 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Stethoscope, Calendar, Clock, Star, ArrowLeft, Loader2, User } from "lucide-react";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore, useHydrationStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 
 export default function DoctorPublicProfilePage() {
   const { slug } = useParams();
   const router = useRouter();
-  const { token, user, _hasHydrated } = useAuthStore();
+  const { token, user } = useAuthStore();
+  const { _hasHydrated } = useHydrationStore();
   const queryClient = useQueryClient();
   const [bookingSlot, setBookingSlot] = useState<string | null>(null);
   const [reason, setReason] = useState("");
@@ -231,3 +232,4 @@ export default function DoctorPublicProfilePage() {
     </div>
   );
 }
+

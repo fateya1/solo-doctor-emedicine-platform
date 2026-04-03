@@ -1,16 +1,17 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Calendar, Clock, User, LogOut, Stethoscope, Loader2, Search, X, Menu } from "lucide-react";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore, useHydrationStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 
 type Tab = "find-doctors" | "appointments";
 
 export default function PatientDashboard() {
-  const { user, token, logout, _hasHydrated } = useAuthStore();
+  const { user, token, logout } = useAuthStore();
+  const { _hasHydrated } = useHydrationStore();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("find-doctors");
@@ -67,7 +68,7 @@ export default function PatientDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* ── Header ── */}
+      {/* â”€â”€ Header â”€â”€ */}
       <header className="bg-white border-b border-slate-100 px-4 sm:px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -102,7 +103,7 @@ export default function PatientDashboard() {
       </header>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* ── Stats: 1 col mobile → 3 cols desktop ── */}
+        {/* â”€â”€ Stats: 1 col mobile â†’ 3 cols desktop â”€â”€ */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5 mb-6 sm:mb-8">
           {[
             { icon: Calendar, label: "Total appointments", value: appointments?.length ?? 0 },
@@ -121,7 +122,7 @@ export default function PatientDashboard() {
           ))}
         </div>
 
-        {/* ── Tabs ── */}
+        {/* â”€â”€ Tabs â”€â”€ */}
         <div className="flex gap-1 bg-white border border-slate-100 rounded-xl p-1 mb-6 w-full sm:w-fit">
           {[
             { key: "find-doctors" as Tab, label: "Find Doctors" },
@@ -136,10 +137,10 @@ export default function PatientDashboard() {
           ))}
         </div>
 
-        {/* ── Find Doctors Tab ── */}
+        {/* â”€â”€ Find Doctors Tab â”€â”€ */}
         {tab === "find-doctors" && (
           <div>
-            {/* Search bar — stacks on mobile */}
+            {/* Search bar â€” stacks on mobile */}
             <div className="card mb-6">
               <h2 className="font-semibold text-slate-900 mb-4">Search for a Doctor</h2>
               <div className="flex flex-col sm:flex-row gap-3">
@@ -194,7 +195,7 @@ export default function PatientDashboard() {
           </div>
         )}
 
-        {/* ── Appointments Tab ── */}
+        {/* â”€â”€ Appointments Tab â”€â”€ */}
         {tab === "appointments" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5">My Appointments</h2>
@@ -215,7 +216,7 @@ export default function PatientDashboard() {
                       </p>
                       <p className="text-xs text-slate-500">
                         {appt.availabilitySlot?.startTime
-                          ? format(new Date(appt.availabilitySlot.startTime), "EEEE, MMM d yyyy · h:mm a")
+                          ? format(new Date(appt.availabilitySlot.startTime), "EEEE, MMM d yyyy Â· h:mm a")
                           : "N/A"}
                       </p>
                       <p className="text-xs text-slate-400">{appt.reason ?? "General consultation"}</p>
@@ -281,14 +282,14 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
   return (
     <div className="card">
       <div className="flex items-start gap-4 mb-4">
-        <div className="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center text-xl shrink-0">👨‍⚕️</div>
+        <div className="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center text-xl shrink-0">ðŸ‘¨â€âš•ï¸</div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-slate-900">{doctor.user?.fullName}</h3>
           <p className="text-sm text-brand-600">{doctor.specialty ?? "General Practice"}</p>
           <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{doctor.bio ?? "No bio available"}</p>
           <div className="flex gap-3 mt-2 text-xs text-slate-500 flex-wrap">
-            {doctor.yearsOfExperience && <span>🎓 {doctor.yearsOfExperience} yrs</span>}
-            {doctor.consultationFee && <span>💰 KES {Number(doctor.consultationFee).toLocaleString()}</span>}
+            {doctor.yearsOfExperience && <span>ðŸŽ“ {doctor.yearsOfExperience} yrs</span>}
+            {doctor.consultationFee && <span>ðŸ’° KES {Number(doctor.consultationFee).toLocaleString()}</span>}
           </div>
         </div>
       </div>
@@ -302,7 +303,7 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
                 {bookingSlot === slot.id ? (
                   <div className="bg-brand-50 border border-brand-100 rounded-xl p-3">
                     <p className="text-xs font-medium text-brand-800 mb-2">
-                      {format(new Date(slot.startTime), "MMM d · h:mm a")}
+                      {format(new Date(slot.startTime), "MMM d Â· h:mm a")}
                     </p>
                     <input value={reason} onChange={(e) => setReason(e.target.value)}
                       placeholder="Reason for visit (optional)" className="input text-xs mb-2 w-full" />
@@ -322,7 +323,7 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
                 ) : (
                   <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                     <p className="text-xs text-slate-700">
-                      {format(new Date(slot.startTime), "MMM d, yyyy · h:mm a")}
+                      {format(new Date(slot.startTime), "MMM d, yyyy Â· h:mm a")}
                     </p>
                     <button onClick={() => setBookingSlot(slot.id)}
                       className="text-xs bg-brand-600 text-white px-3 py-2 rounded-lg hover:bg-brand-700 touch-manipulation">
@@ -342,3 +343,4 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
     </div>
   );
 }
+

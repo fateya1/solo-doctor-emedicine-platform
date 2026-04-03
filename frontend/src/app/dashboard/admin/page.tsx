@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -7,14 +7,15 @@ import {
   LogOut, CheckCircle, XCircle, Clock, ChevronRight,
   Activity, CreditCard, TrendingUp, Menu, X
 } from "lucide-react";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore, useHydrationStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 
 type Tab = "overview" | "tenants" | "doctors" | "patients" | "appointments" | "subscriptions";
 
 export default function AdminDashboard() {
-  const { user, token, logout, _hasHydrated } = useAuthStore();
+  const { user, token, logout } = useAuthStore();
+  const { _hasHydrated } = useHydrationStore();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("overview");
@@ -124,7 +125,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* ── Header ── */}
+      {/* â”€â”€ Header â”€â”€ */}
       <header className="bg-white border-b border-slate-100 px-4 sm:px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -176,7 +177,7 @@ export default function AdminDashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* ── Tabs: horizontally scrollable on mobile ── */}
+        {/* â”€â”€ Tabs: horizontally scrollable on mobile â”€â”€ */}
         <div className="mb-6 sm:mb-8 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
           <div className="flex gap-1 bg-white border border-slate-100 rounded-xl p-1 w-max">
             {tabs.map(({ key, label, icon: Icon }) => (
@@ -191,11 +192,11 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* ── Overview ── */}
+        {/* â”€â”€ Overview â”€â”€ */}
         {tab === "overview" && (
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-5 sm:mb-6">Platform Overview</h2>
-            {/* 2 cols mobile → 3 cols tablet → 6 cols desktop */}
+            {/* 2 cols mobile â†’ 3 cols tablet â†’ 6 cols desktop */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
               {[
                 { label: "Tenants", value: stats?.totalTenants ?? 0, icon: Building2, color: "bg-blue-50 text-blue-600" },
@@ -240,7 +241,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── Tenants ── */}
+        {/* â”€â”€ Tenants â”€â”€ */}
         {tab === "tenants" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5">All Tenants ({tenants?.length ?? 0})</h2>
@@ -251,7 +252,7 @@ export default function AdminDashboard() {
                     <p className="text-sm font-semibold text-slate-800">{t.name}</p>
                     <p className="text-xs text-slate-500">Slug: {t.slug}</p>
                     <p className="text-xs text-slate-400">
-                      {t._count.users} users · Created {format(new Date(t.createdAt), "MMM d, yyyy")}
+                      {t._count.users} users Â· Created {format(new Date(t.createdAt), "MMM d, yyyy")}
                     </p>
                     {t.subscription && (
                       <div className="flex gap-2 mt-1 flex-wrap">
@@ -283,7 +284,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── Doctors ── */}
+        {/* â”€â”€ Doctors â”€â”€ */}
         {tab === "doctors" && (
           <div className="space-y-6">
             {(pendingDoctors?.length ?? 0) > 0 && (
@@ -314,7 +315,7 @@ export default function AdminDashboard() {
                     <div>
                       <p className="text-sm font-medium text-slate-800">{d.user.fullName}</p>
                       <p className="text-xs text-slate-500">{d.user.email}</p>
-                      <p className="text-xs text-slate-400">{d.specialty ?? "General Practice"} · Joined {format(new Date(d.user.createdAt), "MMM d, yyyy")}</p>
+                      <p className="text-xs text-slate-400">{d.specialty ?? "General Practice"} Â· Joined {format(new Date(d.user.createdAt), "MMM d, yyyy")}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${d.isVerified ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-600"}`}>
@@ -336,7 +337,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── Patients ── */}
+        {/* â”€â”€ Patients â”€â”€ */}
         {tab === "patients" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5">All Patients ({patients?.length ?? 0})</h2>
@@ -346,7 +347,7 @@ export default function AdminDashboard() {
                   <div>
                     <p className="text-sm font-medium text-slate-800">{p.user.fullName}</p>
                     <p className="text-xs text-slate-500">{p.user.email}</p>
-                    <p className="text-xs text-slate-400">{p._count.appointments} appointments · Joined {format(new Date(p.user.createdAt), "MMM d, yyyy")}</p>
+                    <p className="text-xs text-slate-400">{p._count.appointments} appointments Â· Joined {format(new Date(p.user.createdAt), "MMM d, yyyy")}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${p.user.isActive ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
@@ -364,7 +365,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── Appointments ── */}
+        {/* â”€â”€ Appointments â”€â”€ */}
         {tab === "appointments" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5">Recent Appointments</h2>
@@ -373,10 +374,10 @@ export default function AdminDashboard() {
                 <div key={a.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 bg-slate-50 rounded-xl">
                   <div>
                     <p className="text-sm font-medium text-slate-800">
-                      {a.patient?.user?.fullName} → Dr. {a.availabilitySlot?.doctor?.user?.fullName}
+                      {a.patient?.user?.fullName} â†’ Dr. {a.availabilitySlot?.doctor?.user?.fullName}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {a.availabilitySlot?.startTime ? format(new Date(a.availabilitySlot.startTime), "MMM d, yyyy · h:mm a") : "N/A"}
+                      {a.availabilitySlot?.startTime ? format(new Date(a.availabilitySlot.startTime), "MMM d, yyyy Â· h:mm a") : "N/A"}
                     </p>
                     <p className="text-xs text-slate-400">{a.reason ?? "General consultation"}</p>
                   </div>
@@ -393,7 +394,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── Subscriptions ── */}
+        {/* â”€â”€ Subscriptions â”€â”€ */}
         {tab === "subscriptions" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5">All Subscriptions ({subscriptions?.length ?? 0})</h2>
@@ -403,10 +404,10 @@ export default function AdminDashboard() {
                   <div>
                     <p className="text-sm font-semibold text-slate-800">{s.tenant?.name}</p>
                     <p className="text-xs text-slate-500">
-                      Period: {format(new Date(s.currentPeriodStart), "MMM d")} – {format(new Date(s.currentPeriodEnd), "MMM d, yyyy")}
+                      Period: {format(new Date(s.currentPeriodStart), "MMM d")} â€“ {format(new Date(s.currentPeriodEnd), "MMM d, yyyy")}
                     </p>
                     <p className="text-xs text-slate-400">
-                      {s.payments?.length ?? 0} payments · Last updated {format(new Date(s.updatedAt), "MMM d, yyyy")}
+                      {s.payments?.length ?? 0} payments Â· Last updated {format(new Date(s.updatedAt), "MMM d, yyyy")}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -427,3 +428,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
