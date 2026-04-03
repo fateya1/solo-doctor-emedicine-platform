@@ -1,10 +1,10 @@
-"use client";
-import { useState, useEffect } from "react";
+﻿"use client";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Stethoscope, Lock, Eye, EyeOff, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { apiClient } from "@/lib/api";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -56,7 +56,6 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4">
-      {/* Logo */}
       <div className="flex items-center gap-2 mb-8">
         <div className="w-9 h-9 bg-brand-600 rounded-xl flex items-center justify-center">
           <Stethoscope className="w-5 h-5 text-white" />
@@ -66,7 +65,6 @@ export default function ResetPasswordPage() {
 
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-100 p-8">
         {success ? (
-          /* ── Success state ── */
           <div className="text-center">
             <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-7 h-7 text-green-600" />
@@ -83,7 +81,6 @@ export default function ResetPasswordPage() {
             </button>
           </div>
         ) : (
-          /* ── Form state ── */
           <>
             <div className="w-12 h-12 bg-brand-50 rounded-2xl flex items-center justify-center mb-5">
               <Lock className="w-6 h-6 text-brand-600" />
@@ -91,10 +88,9 @@ export default function ResetPasswordPage() {
 
             <h1 className="text-xl font-bold text-slate-900 mb-1">Set a new password</h1>
             <p className="text-sm text-slate-500 mb-6">
-              Choose a strong password you haven't used before.
+              Choose a strong password you have not used before.
             </p>
 
-            {/* Invalid / missing token */}
             {!token && (
               <div className="flex items-start gap-3 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-5">
                 <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
@@ -115,7 +111,6 @@ export default function ResetPasswordPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* New password */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
                   New password
@@ -140,7 +135,6 @@ export default function ResetPasswordPage() {
                   </button>
                 </div>
 
-                {/* Password strength bar */}
                 {strength && (
                   <div className="mt-2">
                     <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -160,7 +154,6 @@ export default function ResetPasswordPage() {
                 )}
               </div>
 
-              {/* Confirm password */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
                   Confirm new password
@@ -179,7 +172,7 @@ export default function ResetPasswordPage() {
                   disabled={!token}
                 />
                 {confirmPassword && confirmPassword !== newPassword && (
-                  <p className="text-xs text-red-500 mt-1">Passwords don't match</p>
+                  <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
                 )}
               </div>
 
@@ -214,5 +207,17 @@ export default function ResetPasswordPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
