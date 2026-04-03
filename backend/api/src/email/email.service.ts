@@ -1,4 +1,4 @@
-﻿import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import * as nodemailer from "nodemailer";
 
 export interface EmailPayload {
@@ -255,6 +255,58 @@ export class EmailService {
             <p style="margin:0;"><strong>Appointment:</strong> ${dateStr}</p>
           </div>
           <a href="${joinUrl}" style="background:#0284c7;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:16px;font-weight:600;">Join Video Call</a>
+          <p style="color:#64748b;margin-top:32px;font-size:14px;">The SoloDoc Team</p>
+        </div>
+      `,
+    });
+  }
+
+  async sendAppointmentReminder(
+    to: string,
+    patientName: string,
+    doctorName: string,
+    startTime: Date,
+    timeUntil: string,
+  ): Promise<void> {
+    const dateStr = startTime.toLocaleString("en-KE", { dateStyle: "full", timeStyle: "short" });
+    await this.send({
+      to,
+      subject: `Appointment Reminder: ${timeUntil} until your consultation - SoloDoc`,
+      html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;">
+          <h1 style="color:#0284c7;">Appointment Reminder</h1>
+          <p>Hi ${patientName},</p>
+          <p>This is a reminder that you have an appointment with <strong>Dr. ${doctorName}</strong> in <strong>${timeUntil}</strong>.</p>
+          <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin:16px 0;">
+            <p style="margin:0;"><strong>Date & Time:</strong> ${dateStr}</p>
+          </div>
+          <a href="${process.env.FRONTEND_URL}/dashboard/patient" style="background:#0284c7;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:16px;">View Appointment</a>
+          <p style="color:#64748b;margin-top:32px;font-size:14px;">The SoloDoc Team</p>
+        </div>
+      `,
+    });
+  }
+
+  async sendAppointmentReminderToDoctor(
+    to: string,
+    doctorName: string,
+    patientName: string,
+    startTime: Date,
+    timeUntil: string,
+  ): Promise<void> {
+    const dateStr = startTime.toLocaleString("en-KE", { dateStyle: "full", timeStyle: "short" });
+    await this.send({
+      to,
+      subject: `Upcoming Appointment Reminder: ${timeUntil} - SoloDoc`,
+      html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;">
+          <h1 style="color:#0284c7;">Upcoming Appointment</h1>
+          <p>Hi Dr. ${doctorName},</p>
+          <p>You have an appointment with <strong>${patientName}</strong> in <strong>${timeUntil}</strong>.</p>
+          <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin:16px 0;">
+            <p style="margin:0;"><strong>Date & Time:</strong> ${dateStr}</p>
+          </div>
+          <a href="${process.env.FRONTEND_URL}/dashboard/doctor" style="background:#0284c7;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:16px;">View Dashboard</a>
           <p style="color:#64748b;margin-top:32px;font-size:14px;">The SoloDoc Team</p>
         </div>
       `,
