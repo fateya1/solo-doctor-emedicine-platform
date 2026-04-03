@@ -6,7 +6,7 @@ import { Calendar, Clock, User, LogOut, Stethoscope, Loader2, Search, X, Menu } 
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
-
+import { VideoButton } from "@/components/video-button";
 type Tab = "find-doctors" | "appointments";
 
 export default function PatientDashboard() {
@@ -231,6 +231,7 @@ export default function PatientDashboard() {
                       {appt.status === "CONFIRMED" && (
                         cancellingId === appt.id ? (
                           <div className="flex gap-1">
+                            <VideoButton appointmentId={appt.id} role="patient" />
                             <button onClick={() => cancelMutation.mutate(appt.id)}
                               disabled={cancelMutation.isPending}
                               className="text-xs bg-red-600 text-white px-3 py-2 rounded-lg flex items-center gap-1 touch-manipulation">

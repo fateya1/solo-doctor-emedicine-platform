@@ -10,7 +10,7 @@ import {
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
-
+import { VideoButton } from "@/components/video-button";
 type Tab = "appointments" | "slots" | "analytics" | "subscription";
 
 export default function DoctorDashboard() {
@@ -256,6 +256,7 @@ export default function DoctorDashboard() {
                       }`}>{appt.status}</span>
                       {appt.status === "CONFIRMED" && (
                         <div className="flex gap-1">
+                          <VideoButton appointmentId={appt.id} role="doctor" />
                           <button onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "COMPLETED" })}
                             disabled={updateStatusMutation.isPending} title="Mark completed"
                             className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 touch-manipulation">

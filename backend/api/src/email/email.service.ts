@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+﻿import { Injectable, Logger } from "@nestjs/common";
 import * as nodemailer from "nodemailer";
 
 export interface EmailPayload {
@@ -228,6 +228,33 @@ export class EmailService {
           <p>Your <strong>${plan}</strong> plan expires on <strong>${dateStr}</strong> (${daysLeft} day${daysLeft === 1 ? "" : "s"} remaining).</p>
           <p>Renew now to keep your account active and continue accepting patients without interruption.</p>
           <a href="${process.env.FRONTEND_URL}/dashboard/doctor" style="background:#0284c7;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:16px;">Renew Subscription</a>
+          <p style="color:#64748b;margin-top:32px;font-size:14px;">The SoloDoc Team</p>
+        </div>
+      `,
+    });
+  }
+
+  async sendVideoConsultationInvite(
+    to: string,
+    patientName: string,
+    doctorName: string,
+    appointmentId: string,
+    startTime: Date,
+  ): Promise<void> {
+    const dateStr = startTime.toLocaleString("en-KE", { dateStyle: "full", timeStyle: "short" });
+    const joinUrl = `${process.env.FRONTEND_URL}/dashboard/patient?video=${appointmentId}`;
+    await this.send({
+      to,
+      subject: "Your Video Consultation is Ready - SoloDoc",
+      html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;">
+          <h1 style="color:#0284c7;">Video Consultation Ready</h1>
+          <p>Hi ${patientName},</p>
+          <p>Dr. ${doctorName} has started your video consultation room.</p>
+          <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin:16px 0;">
+            <p style="margin:0;"><strong>Appointment:</strong> ${dateStr}</p>
+          </div>
+          <a href="${joinUrl}" style="background:#0284c7;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:16px;font-weight:600;">Join Video Call</a>
           <p style="color:#64748b;margin-top:32px;font-size:14px;">The SoloDoc Team</p>
         </div>
       `,

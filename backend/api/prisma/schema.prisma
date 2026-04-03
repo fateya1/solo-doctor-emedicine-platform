@@ -186,16 +186,18 @@ model AvailabilitySlot {
 }
 
 model Appointment {
-  id           String            @id @default(uuid())
-  patientId    String
-  slotId       String            @unique
-  status       AppointmentStatus @default(PENDING)
-  reason       String?
-  notes        String?
-  cancelledAt  DateTime?
-  cancelReason String?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  id            String            @id @default(uuid())
+  patientId     String
+  slotId        String            @unique
+  status        AppointmentStatus @default(PENDING)
+  reason        String?
+  notes         String?
+  cancelledAt   DateTime?
+  cancelReason  String?
+  videoRoomName String?
+  videoRoomUrl  String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
   patient          PatientProfile   @relation(fields: [patientId], references: [id])
   availabilitySlot AvailabilitySlot @relation(fields: [slotId], references: [id])
