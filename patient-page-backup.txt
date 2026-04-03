@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Clock, User, LogOut, Stethoscope, Loader2, Search, X, Menu, Phone, CheckCircle } from "lucide-react";
+import { Calendar, Clock, User, LogOut, Stethoscope, Loader2, Search, X, Menu } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
@@ -19,9 +19,6 @@ export default function PatientDashboard() {
   const [searchQuery, setSearchQuery] = useState({ name: "", specialty: "" });
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showPhoneModal, setShowPhoneModal] = useState(false);
-  const [phoneInput, setPhoneInput] = useState("");
-  const [phoneSaved, setPhoneSaved] = useState(false);
 
   useEffect(() => {
     if (_hasHydrated && !token) router.push("/auth/login");
@@ -56,16 +53,6 @@ export default function PatientDashboard() {
     onError: (err: any) => alert(err.response?.data?.message || "Failed to cancel appointment."),
   });
 
-  const updatePhoneMutation = useMutation({
-    mutationFn: (phone: string) => apiClient.patch("/patient/profile", { phone }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["patient-profile"] });
-      setPhoneSaved(true);
-      setTimeout(() => { setShowPhoneModal(false); setPhoneSaved(false); }, 1500);
-    },
-    onError: (err: any) => alert(err.response?.data?.message || "Failed to update phone."),
-  });
-
   if (!_hasHydrated) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -80,6 +67,7 @@ export default function PatientDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* ── Header ── */}
       <header className="bg-white border-b border-slate-100 px-4 sm:px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -88,6 +76,7 @@ export default function PatientDashboard() {
             </div>
             <span className="font-display font-bold text-lg">SoloDoc</span>
           </div>
+          {/* Desktop nav */}
           <div className="hidden sm:flex items-center gap-4">
             <span className="text-sm text-slate-600">Hi, {user?.fullName?.split(" ")[0]}</span>
             <button onClick={() => { logout(); router.push("/auth/login"); }}
@@ -95,6 +84,7 @@ export default function PatientDashboard() {
               <LogOut className="w-4 h-4" /> Sign out
             </button>
           </div>
+          {/* Mobile hamburger */}
           <button className="sm:hidden p-2 rounded-lg hover:bg-slate-50"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X className="w-5 h-5 text-slate-600" /> : <Menu className="w-5 h-5 text-slate-600" />}
@@ -112,6 +102,7 @@ export default function PatientDashboard() {
       </header>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* ── Stats: 1 col mobile → 3 cols desktop ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5 mb-6 sm:mb-8">
           {[
             { icon: Calendar, label: "Total appointments", value: appointments?.length ?? 0 },
@@ -130,31 +121,7 @@ export default function PatientDashboard() {
           ))}
         </div>
 
-        {!profile?.phone && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-amber-600 shrink-0" />
-              <p className="text-sm text-amber-800">Add your phone number to receive SMS appointment reminders</p>
-            </div>
-            <button onClick={() => { setPhoneInput(""); setShowPhoneModal(true); }}
-              className="text-xs bg-amber-600 text-white px-3 py-1.5 rounded-lg hover:bg-amber-700 shrink-0 touch-manipulation">
-              Add Phone
-            </button>
-          </div>
-        )}
-        {profile?.phone && (
-          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-green-600 shrink-0" />
-              <p className="text-sm text-green-800">SMS reminders active: <strong>{profile.phone}</strong></p>
-            </div>
-            <button onClick={() => { setPhoneInput(profile.phone ?? ""); setShowPhoneModal(true); }}
-              className="text-xs text-green-700 underline shrink-0 touch-manipulation">
-              Change
-            </button>
-          </div>
-        )}
-
+        {/* ── Tabs ── */}
         <div className="flex gap-1 bg-white border border-slate-100 rounded-xl p-1 mb-6 w-full sm:w-fit">
           {[
             { key: "find-doctors" as Tab, label: "Find Doctors" },
@@ -169,8 +136,10 @@ export default function PatientDashboard() {
           ))}
         </div>
 
+        {/* ── Find Doctors Tab ── */}
         {tab === "find-doctors" && (
           <div>
+            {/* Search bar — stacks on mobile */}
             <div className="card mb-6">
               <h2 className="font-semibold text-slate-900 mb-4">Search for a Doctor</h2>
               <div className="flex flex-col sm:flex-row gap-3">
@@ -200,6 +169,7 @@ export default function PatientDashboard() {
               </div>
             </div>
 
+            {/* Doctor cards */}
             {searchingDoctors ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
@@ -224,6 +194,7 @@ export default function PatientDashboard() {
           </div>
         )}
 
+        {/* ── Appointments Tab ── */}
         {tab === "appointments" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5">My Appointments</h2>
@@ -244,7 +215,7 @@ export default function PatientDashboard() {
                       </p>
                       <p className="text-xs text-slate-500">
                         {appt.availabilitySlot?.startTime
-                          ? format(new Date(appt.availabilitySlot.startTime), "EEEE, MMM d yyyy h:mm a")
+                          ? format(new Date(appt.availabilitySlot.startTime), "EEEE, MMM d yyyy · h:mm a")
                           : "N/A"}
                       </p>
                       <p className="text-xs text-slate-400">{appt.reason ?? "General consultation"}</p>
@@ -273,13 +244,10 @@ export default function PatientDashboard() {
                             </button>
                           </div>
                         ) : (
-                          <div className="flex gap-1">
-                            <VideoButton appointmentId={appt.id} role="patient" />
-                            <button onClick={() => setCancellingId(appt.id)}
-                              className="text-xs bg-red-50 text-red-600 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors touch-manipulation">
-                              Cancel
-                            </button>
-                          </div>
+                          <button onClick={() => setCancellingId(appt.id)}
+                            className="text-xs bg-red-50 text-red-600 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors touch-manipulation">
+                            Cancel
+                          </button>
                         )
                       )}
                     </div>
@@ -290,54 +258,6 @@ export default function PatientDashboard() {
           </div>
         )}
       </div>
-
-      {showPhoneModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-slate-900 flex items-center gap-2">
-                <Phone className="w-4 h-4 text-brand-600" /> Add Phone for SMS Reminders
-              </h2>
-              <button onClick={() => setShowPhoneModal(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <p className="text-sm text-slate-500 mb-4">
-              Add your phone number to receive SMS reminders 24hrs and 1hr before your appointments.
-            </p>
-            {phoneSaved ? (
-              <div className="flex items-center justify-center gap-2 text-green-600 py-4">
-                <CheckCircle className="w-5 h-5" />
-                <span className="font-medium">Phone number saved!</span>
-              </div>
-            ) : (
-              <>
-                <input
-                  type="tel"
-                  value={phoneInput}
-                  onChange={(e) => setPhoneInput(e.target.value)}
-                  placeholder="+254712345678 or 0712345678"
-                  className="input w-full mb-4"
-                  autoFocus
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => updatePhoneMutation.mutate(phoneInput)}
-                    disabled={!phoneInput || updatePhoneMutation.isPending}
-                    className="btn-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    {updatePhoneMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Save
-                  </button>
-                  <button onClick={() => setShowPhoneModal(false)} className="btn-secondary px-4">
-                    Cancel
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -362,16 +282,14 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
   return (
     <div className="card">
       <div className="flex items-start gap-4 mb-4">
-        <div className="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center shrink-0 font-bold text-lg text-brand-600">
-          {doctor.user?.fullName?.charAt(0) ?? "D"}
-        </div>
+        <div className="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center text-xl shrink-0">👨‍⚕️</div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-slate-900">{doctor.user?.fullName}</h3>
           <p className="text-sm text-brand-600">{doctor.specialty ?? "General Practice"}</p>
           <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{doctor.bio ?? "No bio available"}</p>
           <div className="flex gap-3 mt-2 text-xs text-slate-500 flex-wrap">
-            {doctor.yearsOfExperience && <span>{doctor.yearsOfExperience} yrs exp</span>}
-            {doctor.consultationFee && <span>KES {Number(doctor.consultationFee).toLocaleString()}</span>}
+            {doctor.yearsOfExperience && <span>🎓 {doctor.yearsOfExperience} yrs</span>}
+            {doctor.consultationFee && <span>💰 KES {Number(doctor.consultationFee).toLocaleString()}</span>}
           </div>
         </div>
       </div>
@@ -385,7 +303,7 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
                 {bookingSlot === slot.id ? (
                   <div className="bg-brand-50 border border-brand-100 rounded-xl p-3">
                     <p className="text-xs font-medium text-brand-800 mb-2">
-                      {format(new Date(slot.startTime), "MMM d h:mm a")}
+                      {format(new Date(slot.startTime), "MMM d · h:mm a")}
                     </p>
                     <input value={reason} onChange={(e) => setReason(e.target.value)}
                       placeholder="Reason for visit (optional)" className="input text-xs mb-2 w-full" />
@@ -405,7 +323,7 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
                 ) : (
                   <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                     <p className="text-xs text-slate-700">
-                      {format(new Date(slot.startTime), "MMM d, yyyy h:mm a")}
+                      {format(new Date(slot.startTime), "MMM d, yyyy · h:mm a")}
                     </p>
                     <button onClick={() => setBookingSlot(slot.id)}
                       className="text-xs bg-brand-600 text-white px-3 py-2 rounded-lg hover:bg-brand-700 touch-manipulation">
@@ -425,3 +343,4 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
     </div>
   );
 }
+
