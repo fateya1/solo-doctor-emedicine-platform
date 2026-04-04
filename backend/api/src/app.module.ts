@@ -16,6 +16,7 @@ import { SchedulerModule } from "./scheduler/scheduler.module";
 import { VideoModule } from "./video/video.module";
 import { ReviewsModule } from "./reviews/reviews.module";
 import { PrescriptionsModule } from "./prescriptions/prescriptions.module";
+import { MedicalRecordsModule } from "./medical-records/medical-records.module";
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { PrescriptionsModule } from "./prescriptions/prescriptions.module";
     VideoModule,
     ReviewsModule,
     PrescriptionsModule,
+    MedicalRecordsModule,
   ],
 })
 export class AppModule {}

@@ -5,13 +5,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar, Users, Clock, LogOut, Stethoscope, Plus, Loader2,
   CheckCircle, XCircle, AlertCircle, CreditCard, TrendingUp,
-  BarChart2, ArrowUp, ArrowDown, Menu, X, FileText
+  BarChart2, ArrowUp, ArrowDown, Menu, X, FileText, ClipboardList
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 import { VideoButton } from "@/components/video-button";
 import { PrescriptionModal } from "@/components/prescription-modal";
+import { ConsultationNotesModal } from "@/components/consultation-notes-modal";
 type Tab = "appointments" | "slots" | "analytics" | "subscription";
 
 export default function DoctorDashboard() {
@@ -25,6 +26,7 @@ export default function DoctorDashboard() {
   const [slotDuration, setSlotDuration] = useState(60);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [prescribingAppt, setPrescribingAppt] = useState<{ id: string; patientName: string; existing?: any } | null>(null);
+  const [notingAppt, setNotingAppt] = useState<{ id: string; patientName: string } | null>(null);
 
   useEffect(() => {
     if (_hasHydrated && !token) router.push("/auth/login");
@@ -261,10 +263,22 @@ export default function DoctorDashboard() {
                             existing: appt.prescription ?? undefined,
                           })}
                           className="flex items-center gap-1 text-xs bg-teal-50 text-teal-700 hover:bg-teal-100 px-3 py-2 rounded-lg touch-manipulation"
-                          title="Write prescription"
                         >
                           <FileText className="w-3 h-3" />
                           {appt.prescription ? "Edit Rx" : "Write Rx"}
+                        </button>
+                      )}
+
+                      {(appt.status === "CONFIRMED" || appt.status === "COMPLETED") && (
+                        <button
+                          onClick={() => setNotingAppt({
+                            id: appt.id,
+                            patientName: appt.patient?.user?.fullName ?? "Patient",
+                          })}
+                          className="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-2 rounded-lg touch-manipulation"
+                        >
+                          <ClipboardList className="w-3 h-3" />
+                          {appt.consultationNote ? "Edit Notes" : "Add Notes"}
                         </button>
                       )}
 
@@ -373,38 +387,10 @@ export default function DoctorDashboard() {
               <>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                   {[
-                    {
-                      label: "This month",
-                      value: analytics.appointmentsThisMonth,
-                      sub: `vs ${analytics.appointmentsLastMonth} last month`,
-                      trend: analytics.growthRate,
-                      color: "bg-brand-50 text-brand-600",
-                      icon: Calendar,
-                    },
-                    {
-                      label: "Revenue this month",
-                      value: `KES ${analytics.revenueThisMonth.toLocaleString()}`,
-                      sub: `KES ${analytics.revenueLastMonth.toLocaleString()} last month`,
-                      trend: analytics.growthRate,
-                      color: "bg-green-50 text-green-600",
-                      icon: TrendingUp,
-                    },
-                    {
-                      label: "Completion rate",
-                      value: `${analytics.completionRate}%`,
-                      sub: `${analytics.completedAppointments} completed`,
-                      trend: null,
-                      color: "bg-blue-50 text-blue-600",
-                      icon: CheckCircle,
-                    },
-                    {
-                      label: "Slot utilization",
-                      value: `${analytics.slotUtilization}%`,
-                      sub: "of slots booked",
-                      trend: null,
-                      color: "bg-purple-50 text-purple-600",
-                      icon: BarChart2,
-                    },
+                    { label: "This month", value: analytics.appointmentsThisMonth, sub: `vs ${analytics.appointmentsLastMonth} last month`, trend: analytics.growthRate, color: "bg-brand-50 text-brand-600", icon: Calendar },
+                    { label: "Revenue this month", value: `KES ${analytics.revenueThisMonth.toLocaleString()}`, sub: `KES ${analytics.revenueLastMonth.toLocaleString()} last month`, trend: analytics.growthRate, color: "bg-green-50 text-green-600", icon: TrendingUp },
+                    { label: "Completion rate", value: `${analytics.completionRate}%`, sub: `${analytics.completedAppointments} completed`, trend: null, color: "bg-blue-50 text-blue-600", icon: CheckCircle },
+                    { label: "Slot utilization", value: `${analytics.slotUtilization}%`, sub: "of slots booked", trend: null, color: "bg-purple-50 text-purple-600", icon: BarChart2 },
                   ].map(({ label, value, sub, trend, color, icon: Icon }) => (
                     <div key={label} className="card">
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${color}`}>
@@ -414,9 +400,7 @@ export default function DoctorDashboard() {
                       <p className="text-xs text-slate-500 mt-0.5">{label}</p>
                       <div className="flex items-center gap-1 mt-2">
                         {trend !== null && trend !== undefined && (
-                          <span className={`flex items-center gap-0.5 text-xs font-medium ${
-                            trend >= 0 ? "text-green-600" : "text-red-500"
-                          }`}>
+                          <span className={`flex items-center gap-0.5 text-xs font-medium ${trend >= 0 ? "text-green-600" : "text-red-500"}`}>
                             {trend >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
                             {Math.abs(trend)}%
                           </span>
@@ -434,10 +418,8 @@ export default function DoctorDashboard() {
                       <div key={m.month} className="flex-1 flex flex-col items-center gap-2">
                         <p className="text-xs font-medium text-slate-600">{m.appointments}</p>
                         <div className="w-full bg-slate-100 rounded-t-lg relative" style={{ height: "100px" }}>
-                          <div
-                            className="w-full bg-brand-500 rounded-t-lg absolute bottom-0 transition-all"
-                            style={{ height: `${Math.max((m.appointments / maxBar) * 100, m.appointments > 0 ? 8 : 0)}%` }}
-                          />
+                          <div className="w-full bg-brand-500 rounded-t-lg absolute bottom-0 transition-all"
+                            style={{ height: `${Math.max((m.appointments / maxBar) * 100, m.appointments > 0 ? 8 : 0)}%` }} />
                         </div>
                         <p className="text-xs text-slate-500">{m.month}</p>
                       </div>
@@ -475,13 +457,11 @@ export default function DoctorDashboard() {
                         { label: "Cancelled", value: analytics.cancelledAppointments, color: "bg-red-400" },
                         { label: "No-show", value: analytics.noShowAppointments, color: "bg-amber-400" },
                       ].map(({ label, value, color }) => {
-                        const pct = analytics.totalAppointments > 0
-                          ? Math.round((value / analytics.totalAppointments) * 100) : 0;
+                        const pct = analytics.totalAppointments > 0 ? Math.round((value / analytics.totalAppointments) * 100) : 0;
                         return (
                           <div key={label}>
                             <div className="flex justify-between text-xs text-slate-600 mb-1">
-                              <span>{label}</span>
-                              <span>{value} ({pct}%)</span>
+                              <span>{label}</span><span>{value} ({pct}%)</span>
                             </div>
                             <div className="bg-slate-100 rounded-full h-2">
                               <div className={`${color} h-2 rounded-full`} style={{ width: `${pct}%` }} />
@@ -491,13 +471,10 @@ export default function DoctorDashboard() {
                       })}
                     </div>
                   </div>
-
                   <div className="card">
                     <h3 className="font-semibold text-slate-900 mb-4">Total revenue</h3>
                     <div className="flex flex-col items-center justify-center h-28">
-                      <p className="text-2xl sm:text-3xl font-bold text-green-600">
-                        KES {analytics.revenueTotal.toLocaleString()}
-                      </p>
+                      <p className="text-2xl sm:text-3xl font-bold text-green-600">KES {analytics.revenueTotal.toLocaleString()}</p>
                       <p className="text-sm text-slate-500 mt-1">from {analytics.completedAppointments} completed sessions</p>
                       {analytics.consultationFee > 0 && (
                         <p className="text-xs text-slate-400 mt-1">@ KES {Number(analytics.consultationFee).toLocaleString()} per session</p>
@@ -518,9 +495,7 @@ export default function DoctorDashboard() {
             {!subscription ? (
               <div className="text-center py-8">
                 <p className="text-slate-500 mb-4">No active subscription found.</p>
-                <button onClick={() => router.push("/onboarding")} className="btn-primary">
-                  Set up subscription
-                </button>
+                <button onClick={() => router.push("/onboarding")} className="btn-primary">Set up subscription</button>
               </div>
             ) : (
               <div className="space-y-4">
@@ -560,17 +535,12 @@ export default function DoctorDashboard() {
                       {subscription.payments.map((p: any) => (
                         <div key={p.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 bg-slate-50 rounded-xl">
                           <div>
-                            <p className="text-sm font-medium text-slate-800">
-                              KES {Number(p.amount).toLocaleString()} · {p.plan}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {p.mpesaReceiptNo ?? "Pending"} · {p.paidAt ? format(new Date(p.paidAt), "MMM d, yyyy") : "-"}
-                            </p>
+                            <p className="text-sm font-medium text-slate-800">KES {Number(p.amount).toLocaleString()} · {p.plan}</p>
+                            <p className="text-xs text-slate-500">{p.mpesaReceiptNo ?? "Pending"} · {p.paidAt ? format(new Date(p.paidAt), "MMM d, yyyy") : "-"}</p>
                           </div>
                           <span className={`text-xs px-2.5 py-1 rounded-full font-medium w-fit ${
                             p.status === "COMPLETED" ? "bg-green-50 text-green-700" :
-                            p.status === "FAILED" ? "bg-red-50 text-red-600" :
-                            "bg-amber-50 text-amber-700"
+                            p.status === "FAILED" ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-700"
                           }`}>{p.status}</span>
                         </div>
                       ))}
@@ -589,6 +559,14 @@ export default function DoctorDashboard() {
           patientName={prescribingAppt.patientName}
           existingPrescription={prescribingAppt.existing}
           onClose={() => setPrescribingAppt(null)}
+        />
+      )}
+
+      {notingAppt && (
+        <ConsultationNotesModal
+          appointmentId={notingAppt.id}
+          patientName={notingAppt.patientName}
+          onClose={() => setNotingAppt(null)}
         />
       )}
     </div>

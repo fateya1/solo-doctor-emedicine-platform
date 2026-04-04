@@ -9,7 +9,8 @@ import { format } from "date-fns";
 import { VideoButton } from "@/components/video-button";
 import { PrescriptionDownload } from "@/components/prescription-download";
 import { ReviewModal } from "@/components/review-modal";
-type Tab = "find-doctors" | "appointments";
+import { MedicalHistory } from "@/components/medical-history";
+type Tab = "find-doctors" | "appointments" | "history";
 
 export default function PatientDashboard() {
   const { user, token, logout, _hasHydrated } = useAuthStore();
@@ -161,7 +162,9 @@ export default function PatientDashboard() {
         <div className="flex gap-1 bg-white border border-slate-100 rounded-xl p-1 mb-6 w-full sm:w-fit">
           {[
             { key: "find-doctors" as Tab, label: "Find Doctors" },
+            { key: "history" as Tab, label: "Medical History" },
             { key: "appointments" as Tab, label: "My Appointments" },
+            { key: "history" as Tab, label: "Medical History" },
           ].map(({ key, label }) => (
             <button key={key} onClick={() => setTab(key)}
               className={`flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-medium transition-all touch-manipulation ${
@@ -170,6 +173,7 @@ export default function PatientDashboard() {
               {label}
             </button>
           ))}
+          {tab === "history" && <MedicalHistory />}
         </div>
 
         {tab === "find-doctors" && (

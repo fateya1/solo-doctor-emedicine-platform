@@ -111,6 +111,7 @@ model DoctorProfile {
   availabilitySlots AvailabilitySlot[]
   reviews           Review[]
   prescriptions     Prescription[]
+  consultationNotes ConsultationNote[]
 
   @@map("doctor_profiles")
 }
@@ -127,10 +128,11 @@ model PatientProfile {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  user          User           @relation(fields: [userId], references: [id])
-  appointments  Appointment[]
-  reviews       Review[]
-  prescriptions Prescription[]
+  user              User               @relation(fields: [userId], references: [id])
+  appointments      Appointment[]
+  reviews           Review[]
+  prescriptions     Prescription[]
+  consultationNotes ConsultationNote[]
 
   @@map("patient_profiles")
 }
@@ -203,10 +205,11 @@ model Appointment {
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
-  patient          PatientProfile   @relation(fields: [patientId], references: [id])
-  availabilitySlot AvailabilitySlot @relation(fields: [slotId], references: [id])
-  review           Review?
-  prescription     Prescription?
+  patient           PatientProfile    @relation(fields: [patientId], references: [id])
+  availabilitySlot  AvailabilitySlot  @relation(fields: [slotId], references: [id])
+  review            Review?
+  prescription      Prescription?
+  consultationNote  ConsultationNote?
 
   @@index([patientId])
   @@index([slotId])
@@ -250,4 +253,26 @@ model Prescription {
   @@index([doctorProfileId])
   @@index([patientProfileId])
   @@map("prescriptions")
+}
+
+model ConsultationNote {
+  id               String   @id @default(uuid())
+  appointmentId    String   @unique
+  doctorProfileId  String
+  patientProfileId String
+  subjective       String?
+  objective        String?
+  assessment       String?
+  plan             String?
+  privateNotes     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  appointment    Appointment    @relation(fields: [appointmentId], references: [id])
+  doctorProfile  DoctorProfile  @relation(fields: [doctorProfileId], references: [id])
+  patientProfile PatientProfile @relation(fields: [patientProfileId], references: [id])
+
+  @@index([doctorProfileId])
+  @@index([patientProfileId])
+  @@map("consultation_notes")
 }
