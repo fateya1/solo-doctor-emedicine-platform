@@ -15,6 +15,7 @@ import { OnboardingModule } from "./onboarding/onboarding.module";
 import { SchedulerModule } from "./scheduler/scheduler.module";
 import { VideoModule } from "./video/video.module";
 import { ReviewsModule } from "./reviews/reviews.module";
+import { PrescriptionsModule } from "./prescriptions/prescriptions.module";
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ReviewsModule } from "./reviews/reviews.module";
     SchedulerModule,
     VideoModule,
     ReviewsModule,
+    PrescriptionsModule,
   ],
 })
 export class AppModule {}

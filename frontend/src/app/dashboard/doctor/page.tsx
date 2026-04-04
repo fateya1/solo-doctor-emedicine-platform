@@ -5,12 +5,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar, Users, Clock, LogOut, Stethoscope, Plus, Loader2,
   CheckCircle, XCircle, AlertCircle, CreditCard, TrendingUp,
-  BarChart2, ArrowUp, ArrowDown, Menu, X
+  BarChart2, ArrowUp, ArrowDown, Menu, X, FileText
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 import { VideoButton } from "@/components/video-button";
+import { PrescriptionModal } from "@/components/prescription-modal";
 type Tab = "appointments" | "slots" | "analytics" | "subscription";
 
 export default function DoctorDashboard() {
@@ -23,6 +24,7 @@ export default function DoctorDashboard() {
   const [slotTime, setSlotTime] = useState("09:00");
   const [slotDuration, setSlotDuration] = useState(60);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [prescribingAppt, setPrescribingAppt] = useState<{ id: string; patientName: string; existing?: any } | null>(null);
 
   useEffect(() => {
     if (_hasHydrated && !token) router.push("/auth/login");
@@ -129,7 +131,6 @@ export default function DoctorDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* ── Header ── */}
       <header className="bg-white border-b border-slate-100 px-4 sm:px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -139,7 +140,6 @@ export default function DoctorDashboard() {
             <span className="font-display font-bold text-lg">SoloDoc</span>
             <span className="text-xs bg-teal-50 text-teal-700 font-medium px-2 py-0.5 rounded-full ml-1 hidden sm:inline">Doctor</span>
           </div>
-          {/* Desktop nav */}
           <div className="hidden sm:flex items-center gap-4">
             <span className="text-sm text-slate-600">Dr. {user?.fullName?.split(" ").slice(-1)[0]}</span>
             <button onClick={() => { logout(); router.push("/auth/login"); }}
@@ -147,13 +147,11 @@ export default function DoctorDashboard() {
               <LogOut className="w-4 h-4" /> Sign out
             </button>
           </div>
-          {/* Mobile hamburger */}
           <button className="sm:hidden p-2 rounded-lg hover:bg-slate-50"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             {mobileMenuOpen ? <X className="w-5 h-5 text-slate-600" /> : <Menu className="w-5 h-5 text-slate-600" />}
           </button>
         </div>
-        {/* Mobile menu dropdown */}
         {mobileMenuOpen && (
           <div className="sm:hidden mt-3 pt-3 border-t border-slate-100 flex flex-col gap-3 pb-2">
             <p className="text-sm text-slate-600 px-1">Dr. {user?.fullName}</p>
@@ -166,11 +164,12 @@ export default function DoctorDashboard() {
       </header>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* ── Profile card ── */}
         {profile && (
           <div className="card mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center text-2xl shrink-0">👨‍⚕️</div>
+              <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center shrink-0 font-bold text-xl text-brand-600">
+                {user?.fullName?.charAt(0) ?? "D"}
+              </div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold text-slate-900">{user?.fullName}</h2>
                 <p className="text-sm text-slate-500">{profile.specialty ?? "General Practice"} · {profile.yearsOfExperience ?? 0} yrs experience</p>
@@ -180,7 +179,7 @@ export default function DoctorDashboard() {
                 <span className={`text-xs font-medium px-3 py-1 rounded-full ${
                   profile.isVerified ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-600"
                 }`}>
-                  {profile.isVerified ? "✓ Verified" : "⏳ Pending verification"}
+                  {profile.isVerified ? "Verified" : "Pending verification"}
                 </span>
                 {subDaysLeft !== null && (
                   <span className={`text-xs font-medium px-3 py-1 rounded-full ${
@@ -195,7 +194,6 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* ── Stats grid: 2 cols mobile → 4 cols desktop ── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {[
             { icon: Calendar, label: "Total appointments", value: appointments?.length ?? 0, color: "bg-purple-50 text-purple-600" },
@@ -213,7 +211,6 @@ export default function DoctorDashboard() {
           ))}
         </div>
 
-        {/* ── Tabs: horizontally scrollable on mobile ── */}
         <div className="mb-6 overflow-x-auto">
           <div className="flex gap-1 bg-white border border-slate-100 rounded-xl p-1 w-max min-w-full sm:w-fit sm:min-w-0">
             {tabs.map(({ key, label }) => (
@@ -227,7 +224,6 @@ export default function DoctorDashboard() {
           </div>
         </div>
 
-        {/* ── Appointments Tab ── */}
         {tab === "appointments" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5">Patient Appointments</h2>
@@ -243,7 +239,7 @@ export default function DoctorDashboard() {
                       </p>
                       <p className="text-xs text-slate-500">
                         {appt.availabilitySlot?.startTime
-                          ? format(new Date(appt.availabilitySlot.startTime), "EEEE, MMM d yyyy · h:mm a")
+                          ? format(new Date(appt.availabilitySlot.startTime), "EEEE, MMM d yyyy h:mm a")
                           : "N/A"}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">{appt.reason ?? "General consultation"}</p>
@@ -256,6 +252,22 @@ export default function DoctorDashboard() {
                         appt.status === "NO_SHOW" ? "bg-slate-100 text-slate-500" :
                         "bg-amber-50 text-amber-700"
                       }`}>{appt.status}</span>
+
+                      {(appt.status === "CONFIRMED" || appt.status === "COMPLETED") && (
+                        <button
+                          onClick={() => setPrescribingAppt({
+                            id: appt.id,
+                            patientName: appt.patient?.user?.fullName ?? "Patient",
+                            existing: appt.prescription ?? undefined,
+                          })}
+                          className="flex items-center gap-1 text-xs bg-teal-50 text-teal-700 hover:bg-teal-100 px-3 py-2 rounded-lg touch-manipulation"
+                          title="Write prescription"
+                        >
+                          <FileText className="w-3 h-3" />
+                          {appt.prescription ? "Edit Rx" : "Write Rx"}
+                        </button>
+                      )}
+
                       {appt.status === "CONFIRMED" && (
                         <div className="flex gap-1">
                           <VideoButton appointmentId={appt.id} role="doctor" />
@@ -284,7 +296,6 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* ── Slots Tab ── */}
         {tab === "slots" && (
           <div className="card">
             <div className="flex items-center justify-between mb-5">
@@ -296,7 +307,7 @@ export default function DoctorDashboard() {
             </div>
             {showAddSlot && (
               <div className="bg-brand-50 border border-brand-100 rounded-xl p-4 mb-5">
-                <h3 className="text-sm font-medium text-brand-800 mb-3">New availability slot (1 hour)</h3>
+                <h3 className="text-sm font-medium text-brand-800 mb-3">New availability slot</h3>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input type="date" value={slotDate} onChange={(e) => setSlotDate(e.target.value)}
                     className="input flex-1" min={new Date().toISOString().split("T")[0]} />
@@ -337,7 +348,7 @@ export default function DoctorDashboard() {
                         {format(new Date(slot.startTime), "EEEE, MMM d yyyy")}
                       </p>
                       <p className="text-xs text-slate-500">
-                        {format(new Date(slot.startTime), "h:mm a")} – {format(new Date(slot.endTime), "h:mm a")}
+                        {format(new Date(slot.startTime), "h:mm a")} - {format(new Date(slot.endTime), "h:mm a")}
                       </p>
                     </div>
                     <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
@@ -352,7 +363,6 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* ── Analytics Tab ── */}
         {tab === "analytics" && (
           <div className="space-y-6">
             {!analytics ? (
@@ -361,7 +371,6 @@ export default function DoctorDashboard() {
               </div>
             ) : (
               <>
-                {/* KPI cards: 2 cols mobile → 4 cols desktop */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                   {[
                     {
@@ -418,9 +427,8 @@ export default function DoctorDashboard() {
                   ))}
                 </div>
 
-                {/* Monthly trend bar chart */}
                 <div className="card">
-                  <h3 className="font-semibold text-slate-900 mb-6">Appointments – last 6 months</h3>
+                  <h3 className="font-semibold text-slate-900 mb-6">Appointments - last 6 months</h3>
                   <div className="flex items-end gap-2 sm:gap-3 h-40">
                     {analytics.monthlyTrend.map((m: any) => (
                       <div key={m.month} className="flex-1 flex flex-col items-center gap-2">
@@ -437,9 +445,8 @@ export default function DoctorDashboard() {
                   </div>
                 </div>
 
-                {/* Revenue trend */}
                 <div className="card">
-                  <h3 className="font-semibold text-slate-900 mb-4">Revenue – last 6 months</h3>
+                  <h3 className="font-semibold text-slate-900 mb-4">Revenue - last 6 months</h3>
                   <div className="space-y-3">
                     {analytics.monthlyTrend.map((m: any) => {
                       const maxRevenue = Math.max(...analytics.monthlyTrend.map((x: any) => x.revenue), 1);
@@ -459,7 +466,6 @@ export default function DoctorDashboard() {
                   </div>
                 </div>
 
-                {/* Appointment breakdown */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="card">
                     <h3 className="font-semibold text-slate-900 mb-4">Appointment breakdown</h3>
@@ -504,7 +510,6 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* ── Subscription Tab ── */}
         {tab === "subscription" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5 flex items-center gap-2">
@@ -519,7 +524,6 @@ export default function DoctorDashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                {/* 1 col mobile → 3 cols desktop */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   {[
                     { label: "Plan", value: subscription.plan },
@@ -535,13 +539,13 @@ export default function DoctorDashboard() {
                 <div className="bg-slate-50 rounded-xl p-4">
                   <p className="text-xs text-slate-500 mb-1">Billing period</p>
                   <p className="text-sm font-medium text-slate-800">
-                    {format(new Date(subscription.currentPeriodStart), "MMM d, yyyy")} –{" "}
+                    {format(new Date(subscription.currentPeriodStart), "MMM d, yyyy")} -{" "}
                     {format(new Date(subscription.currentPeriodEnd), "MMM d, yyyy")}
                   </p>
                 </div>
                 {subDaysLeft !== null && subDaysLeft <= 7 && (
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                    <p className="text-sm text-amber-800 font-medium">⚠️ Your subscription expires soon</p>
+                    <p className="text-sm text-amber-800 font-medium">Your subscription expires soon</p>
                     <p className="text-xs text-amber-700 mt-1">Renew now to avoid service interruption.</p>
                     <button onClick={() => router.push("/onboarding")}
                       className="mt-3 text-xs bg-amber-600 text-white px-4 py-2.5 rounded-lg hover:bg-amber-700 touch-manipulation">
@@ -560,7 +564,7 @@ export default function DoctorDashboard() {
                               KES {Number(p.amount).toLocaleString()} · {p.plan}
                             </p>
                             <p className="text-xs text-slate-500">
-                              {p.mpesaReceiptNo ?? "Pending"} · {p.paidAt ? format(new Date(p.paidAt), "MMM d, yyyy") : "–"}
+                              {p.mpesaReceiptNo ?? "Pending"} · {p.paidAt ? format(new Date(p.paidAt), "MMM d, yyyy") : "-"}
                             </p>
                           </div>
                           <span className={`text-xs px-2.5 py-1 rounded-full font-medium w-fit ${
@@ -578,6 +582,15 @@ export default function DoctorDashboard() {
           </div>
         )}
       </div>
+
+      {prescribingAppt && (
+        <PrescriptionModal
+          appointmentId={prescribingAppt.id}
+          patientName={prescribingAppt.patientName}
+          existingPrescription={prescribingAppt.existing}
+          onClose={() => setPrescribingAppt(null)}
+        />
+      )}
     </div>
   );
 }

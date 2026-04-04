@@ -7,6 +7,7 @@ import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 import { VideoButton } from "@/components/video-button";
+import { PrescriptionDownload } from "@/components/prescription-download";
 import { ReviewModal } from "@/components/review-modal";
 type Tab = "find-doctors" | "appointments";
 
@@ -260,6 +261,9 @@ export default function PatientDashboard() {
                         "bg-amber-50 text-amber-700"
                       }`}>{appt.status}</span>
 
+                      {appt.status === "COMPLETED" && appt.prescription && (
+                        <PrescriptionDownload appointmentId={appt.id} />
+                      )}
                       {appt.status === "COMPLETED" && !appt.review && (
                         <button
                           onClick={() => setReviewingAppt({
