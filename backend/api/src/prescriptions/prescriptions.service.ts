@@ -1,3 +1,4 @@
+import { AuditService } from "../audit/audit.service";
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -11,7 +12,7 @@ export interface MedicationItem {
 
 @Injectable()
 export class PrescriptionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly auditService: AuditService) {}
 
   async createPrescription(userId: string, dto: {
     appointmentId: string;

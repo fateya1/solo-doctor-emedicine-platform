@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from "@nes
 import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
 import { SmsService } from "../email/sms.service";
+import { AuditService } from "../audit/audit.service";
 import { BookSlotDto } from "./dto/book-slot.dto";
 import { AppointmentStatus } from "@prisma/client";
 
@@ -12,6 +13,7 @@ export class AppointmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
+    private readonly auditService: AuditService,
     private readonly smsService: SmsService,
   ) {}
 
@@ -80,6 +82,7 @@ export class AppointmentsService {
       }
 
       this.logger.log("Appointment booked: " + appointment.id);
+      this.auditService.log({ userId, action: "APPOINTMENT_BOOKED", entity: "Appointment", entityId: appointment.id, metadata: { slotId: dto.slotId, reason: dto.reason } }).catch(() => {});
       return appointment;
     });
   }

@@ -5,13 +5,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users, Building2, Stethoscope, Calendar, ShieldCheck,
   LogOut, CheckCircle, XCircle, Clock, ChevronRight,
-  Activity, CreditCard, TrendingUp, Menu, X
+  Activity, CreditCard, TrendingUp, Menu, X,
+  FileText, Filter, Search, RefreshCw, Globe, User as UserIcon
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 
-type Tab = "overview" | "tenants" | "doctors" | "patients" | "appointments" | "subscriptions";
+type Tab = "overview" | "tenants" | "doctors" | "patients" | "appointments" | "subscriptions" | "audit-logs";
 
 export default function AdminDashboard() {
   const { user, token, logout, _hasHydrated } = useAuthStore();
@@ -19,6 +20,14 @@ export default function AdminDashboard() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("overview");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // â”€â”€ Audit log filters â”€â”€
+  const [auditSearch, setAuditSearch] = useState("");
+  const [auditRole, setAuditRole] = useState("");
+  const [auditCategory, setAuditCategory] = useState("");
+  const [auditDateFrom, setAuditDateFrom] = useState("");
+  const [auditPage, setAuditPage] = useState(1);
+  const AUDIT_PAGE_SIZE = 20;
 
   useEffect(() => {
     if (_hasHydrated && !token) router.push("/auth/login");
@@ -67,6 +76,20 @@ export default function AdminDashboard() {
     enabled: !!token && _hasHydrated && tab === "subscriptions",
   });
 
+  const { data: auditLogs, isLoading: auditLoading, refetch: refetchAudit } = useQuery({
+    queryKey: ["admin-audit-logs", auditRole, auditCategory, auditDateFrom, auditPage],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (auditRole) params.set("role", auditRole);
+      if (auditCategory) params.set("category", auditCategory);
+      if (auditDateFrom) params.set("from", auditDateFrom);
+      params.set("page", String(auditPage));
+      params.set("limit", String(AUDIT_PAGE_SIZE));
+      return apiClient.get(`/admin/audit-logs?${params.toString()}`).then((r) => r.data);
+    },
+    enabled: !!token && _hasHydrated && tab === "audit-logs",
+  });
+
   const verifyMutation = useMutation({
     mutationFn: (doctorProfileId: string) => apiClient.patch(`/admin/doctors/${doctorProfileId}/verify`),
     onSuccess: () => {
@@ -106,6 +129,7 @@ export default function AdminDashboard() {
     { key: "patients", label: "Patients", icon: Users },
     { key: "appointments", label: "Appointments", icon: Calendar },
     { key: "subscriptions", label: "Subscriptions", icon: CreditCard },
+    { key: "audit-logs", label: "Audit Logs", icon: FileText },
   ];
 
   const statusColor: Record<string, string> = {
@@ -251,7 +275,7 @@ export default function AdminDashboard() {
                     <p className="text-sm font-semibold text-slate-800">{t.name}</p>
                     <p className="text-xs text-slate-500">Slug: {t.slug}</p>
                     <p className="text-xs text-slate-400">
-                      {t._count.users} users · Created {format(new Date(t.createdAt), "MMM d, yyyy")}
+                      {t._count.users} users Â· Created {format(new Date(t.createdAt), "MMM d, yyyy")}
                     </p>
                     {t.subscription && (
                       <div className="flex gap-2 mt-1 flex-wrap">
@@ -314,7 +338,7 @@ export default function AdminDashboard() {
                     <div>
                       <p className="text-sm font-medium text-slate-800">{d.user.fullName}</p>
                       <p className="text-xs text-slate-500">{d.user.email}</p>
-                      <p className="text-xs text-slate-400">{d.specialty ?? "General Practice"} · Joined {format(new Date(d.user.createdAt), "MMM d, yyyy")}</p>
+                      <p className="text-xs text-slate-400">{d.specialty ?? "General Practice"} Â· Joined {format(new Date(d.user.createdAt), "MMM d, yyyy")}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${d.isVerified ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-600"}`}>
@@ -346,7 +370,7 @@ export default function AdminDashboard() {
                   <div>
                     <p className="text-sm font-medium text-slate-800">{p.user.fullName}</p>
                     <p className="text-xs text-slate-500">{p.user.email}</p>
-                    <p className="text-xs text-slate-400">{p._count.appointments} appointments · Joined {format(new Date(p.user.createdAt), "MMM d, yyyy")}</p>
+                    <p className="text-xs text-slate-400">{p._count.appointments} appointments Â· Joined {format(new Date(p.user.createdAt), "MMM d, yyyy")}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${p.user.isActive ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
@@ -376,7 +400,7 @@ export default function AdminDashboard() {
                       {a.patient?.user?.fullName} â†’ Dr. {a.availabilitySlot?.doctor?.user?.fullName}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {a.availabilitySlot?.startTime ? format(new Date(a.availabilitySlot.startTime), "MMM d, yyyy · h:mm a") : "N/A"}
+                      {a.availabilitySlot?.startTime ? format(new Date(a.availabilitySlot.startTime), "MMM d, yyyy Â· h:mm a") : "N/A"}
                     </p>
                     <p className="text-xs text-slate-400">{a.reason ?? "General consultation"}</p>
                   </div>
@@ -406,7 +430,7 @@ export default function AdminDashboard() {
                       Period: {format(new Date(s.currentPeriodStart), "MMM d")} â€“ {format(new Date(s.currentPeriodEnd), "MMM d, yyyy")}
                     </p>
                     <p className="text-xs text-slate-400">
-                      {s.payments?.length ?? 0} payments · Last updated {format(new Date(s.updatedAt), "MMM d, yyyy")}
+                      {s.payments?.length ?? 0} payments Â· Last updated {format(new Date(s.updatedAt), "MMM d, yyyy")}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -423,9 +447,330 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {/* â”€â”€ Audit Logs â”€â”€ */}
+        {tab === "audit-logs" && (
+          <AuditLogsPanel
+            logs={auditLogs}
+            loading={auditLoading}
+            search={auditSearch}
+            setSearch={setAuditSearch}
+            role={auditRole}
+            setRole={setAuditRole}
+            category={auditCategory}
+            setCategory={setAuditCategory}
+            dateFrom={auditDateFrom}
+            setDateFrom={setAuditDateFrom}
+            page={auditPage}
+            setPage={setAuditPage}
+            pageSize={AUDIT_PAGE_SIZE}
+            onRefresh={() => { setAuditPage(1); refetchAudit(); }}
+          />
+        )}
       </div>
     </div>
   );
 }
 
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Audit Logs Panel â€” standalone component to keep the main export clean
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+const ACTION_CATEGORIES = [
+  { value: "", label: "All categories" },
+  { value: "auth", label: "Auth" },
+  { value: "user", label: "User management" },
+  { value: "appointment", label: "Appointments" },
+  { value: "subscription", label: "Subscriptions" },
+  { value: "doctor", label: "Doctor" },
+  { value: "admin", label: "Admin actions" },
+];
+
+const ROLE_OPTIONS = [
+  { value: "", label: "All roles" },
+  { value: "ADMIN", label: "Admin" },
+  { value: "DOCTOR", label: "Doctor" },
+  { value: "PATIENT", label: "Patient" },
+  { value: "SYSTEM", label: "System" },
+];
+
+// Colour-coding by action verb prefix
+function actionBadge(action: string) {
+  const a = action?.toUpperCase() ?? "";
+  if (a.includes("LOGIN") || a.includes("REGISTER"))
+    return { bg: "bg-blue-50 text-blue-700", dot: "bg-blue-400" };
+  if (a.includes("DELETE") || a.includes("CANCEL") || a.includes("SUSPEND"))
+    return { bg: "bg-red-50 text-red-600", dot: "bg-red-400" };
+  if (a.includes("VERIFY") || a.includes("APPROVE") || a.includes("ACTIVATE") || a.includes("COMPLETE"))
+    return { bg: "bg-green-50 text-green-700", dot: "bg-green-400" };
+  if (a.includes("UPDATE") || a.includes("PATCH") || a.includes("EDIT"))
+    return { bg: "bg-amber-50 text-amber-700", dot: "bg-amber-400" };
+  if (a.includes("PAYMENT") || a.includes("SUBSCRIPTION"))
+    return { bg: "bg-purple-50 text-purple-700", dot: "bg-purple-400" };
+  return { bg: "bg-slate-100 text-slate-600", dot: "bg-slate-400" };
+}
+
+function roleBadge(role: string) {
+  if (role === "ADMIN") return "bg-red-50 text-red-700";
+  if (role === "DOCTOR") return "bg-teal-50 text-teal-700";
+  if (role === "PATIENT") return "bg-blue-50 text-blue-700";
+  return "bg-slate-100 text-slate-500";
+}
+
+function AuditLogsPanel({
+  logs, loading, search, setSearch, role, setRole,
+  category, setCategory, dateFrom, setDateFrom,
+  page, setPage, pageSize, onRefresh,
+}: {
+  logs: any; loading: boolean;
+  search: string; setSearch: (v: string) => void;
+  role: string; setRole: (v: string) => void;
+  category: string; setCategory: (v: string) => void;
+  dateFrom: string; setDateFrom: (v: string) => void;
+  page: number; setPage: (v: number) => void;
+  pageSize: number; onRefresh: () => void;
+}) {
+  // Client-side search filter (on top of server-side category/role/date filters)
+  const entries: any[] = logs?.data ?? logs ?? [];
+  const total: number = logs?.total ?? entries.length;
+
+  const filtered = search.trim()
+    ? entries.filter((log: any) => {
+        const q = search.toLowerCase();
+        return (
+          log.action?.toLowerCase().includes(q) ||
+          log.actorName?.toLowerCase().includes(q) ||
+          log.actorEmail?.toLowerCase().includes(q) ||
+          log.targetType?.toLowerCase().includes(q) ||
+          log.description?.toLowerCase().includes(q) ||
+          log.ipAddress?.includes(q)
+        );
+      })
+    : entries;
+
+  const hasFilters = role || category || dateFrom;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  return (
+    <div className="space-y-5">
+      {/* â”€â”€ Header row â”€â”€ */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h2 className="font-semibold text-slate-900 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-slate-500" /> Audit Logs
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Every significant action taken on the platform
+          </p>
+        </div>
+        <button
+          onClick={onRefresh}
+          className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 bg-white border border-slate-200 px-3 py-2 rounded-lg w-fit touch-manipulation"
+        >
+          <RefreshCw className="w-3.5 h-3.5" /> Refresh
+        </button>
+      </div>
+
+      {/* â”€â”€ Filters â”€â”€ */}
+      <div className="card">
+        <div className="flex items-center gap-2 mb-3">
+          <Filter className="w-3.5 h-3.5 text-slate-400" />
+          <p className="text-xs font-medium text-slate-600">Filters</p>
+          {hasFilters && (
+            <button
+              onClick={() => { setRole(""); setCategory(""); setDateFrom(""); setPage(1); }}
+              className="ml-auto text-xs text-brand-600 hover:underline touch-manipulation"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Search */}
+          <div className="relative lg:col-span-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search actor, action, IPâ€¦"
+              className="input pl-8 text-xs w-full"
+            />
+          </div>
+          {/* Category */}
+          <select
+            value={category}
+            onChange={(e) => { setCategory(e.target.value); setPage(1); }}
+            className="input text-xs"
+          >
+            {ACTION_CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </select>
+          {/* Role */}
+          <select
+            value={role}
+            onChange={(e) => { setRole(e.target.value); setPage(1); }}
+            className="input text-xs"
+          >
+            {ROLE_OPTIONS.map((r) => (
+              <option key={r.value} value={r.value}>{r.label}</option>
+            ))}
+          </select>
+          {/* Date from */}
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+            className="input text-xs"
+          />
+        </div>
+      </div>
+
+      {/* â”€â”€ Log list â”€â”€ */}
+      <div className="card">
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <FileText className="w-5 h-5 text-slate-400" />
+            </div>
+            <p className="text-slate-500 text-sm font-medium">No audit logs found</p>
+            <p className="text-slate-400 text-xs mt-1">Try adjusting your filters</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs text-slate-400">
+                Showing {filtered.length} of {total} events
+              </p>
+            </div>
+
+            {/* Timeline */}
+            <div className="relative">
+              {/* Vertical connector line */}
+              <div className="absolute left-[18px] top-2 bottom-2 w-px bg-slate-100 hidden sm:block" />
+
+              <div className="space-y-1">
+                {filtered.map((log: any, idx: number) => {
+                  const badge = actionBadge(log.action);
+                  const isLast = idx === filtered.length - 1;
+                  return (
+                    <div
+                      key={log.id ?? idx}
+                      className={`flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl hover:bg-slate-50 transition-colors group ${!isLast ? "border-b border-slate-50" : ""}`}
+                    >
+                      {/* Dot */}
+                      <div className="relative shrink-0 hidden sm:flex flex-col items-center">
+                        <div className={`w-2.5 h-2.5 rounded-full mt-1.5 ${badge.dot} ring-2 ring-white`} />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {/* Action badge */}
+                            <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-md ${badge.bg}`}>
+                              {log.action ?? "UNKNOWN"}
+                            </span>
+                            {/* Role badge */}
+                            {log.actorRole && (
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleBadge(log.actorRole)}`}>
+                                {log.actorRole}
+                              </span>
+                            )}
+                          </div>
+                          {/* Timestamp */}
+                          <p className="text-xs text-slate-400 whitespace-nowrap shrink-0">
+                            {log.createdAt
+                              ? format(new Date(log.createdAt), "MMM d, yyyy Â· h:mm a")
+                              : "â€”"}
+                          </p>
+                        </div>
+
+                        {/* Description */}
+                        {log.description && (
+                          <p className="text-sm text-slate-700 mt-1">{log.description}</p>
+                        )}
+
+                        {/* Actor + Target row */}
+                        <div className="flex items-center gap-4 mt-1.5 flex-wrap">
+                          {/* Actor */}
+                          {log.actorName && (
+                            <div className="flex items-center gap-1 text-xs text-slate-500">
+                              <UserIcon className="w-3 h-3 text-slate-400" />
+                              <span className="font-medium text-slate-700">{log.actorName}</span>
+                              {log.actorEmail && (
+                                <span className="text-slate-400 hidden sm:inline">({log.actorEmail})</span>
+                              )}
+                            </div>
+                          )}
+                          {/* Target */}
+                          {log.targetType && (
+                            <div className="flex items-center gap-1 text-xs text-slate-400">
+                              <span>â†’</span>
+                              <span className="capitalize">{log.targetType}</span>
+                              {log.targetId && (
+                                <code className="font-mono text-xs bg-slate-100 px-1 rounded hidden sm:inline">
+                                  {log.targetId.slice(0, 8)}â€¦
+                                </code>
+                              )}
+                            </div>
+                          )}
+                          {/* IP */}
+                          {log.ipAddress && (
+                            <div className="flex items-center gap-1 text-xs text-slate-400">
+                              <Globe className="w-3 h-3" />
+                              <span>{log.ipAddress}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Metadata (collapsed by default, expand on hover/tap) */}
+                        {log.metadata && Object.keys(log.metadata).length > 0 && (
+                          <details className="mt-2">
+                            <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-600 select-none w-fit">
+                              Metadata
+                            </summary>
+                            <pre className="text-xs text-slate-500 bg-slate-50 rounded-lg p-2 mt-1 overflow-x-auto whitespace-pre-wrap break-all">
+                              {JSON.stringify(log.metadata, null, 2)}
+                            </pre>
+                          </details>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* â”€â”€ Pagination â”€â”€ */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between pt-4 mt-2 border-t border-slate-100">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage(page - 1)}
+                  className="text-xs px-3 py-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-40 touch-manipulation"
+                >
+                  â† Previous
+                </button>
+                <p className="text-xs text-slate-400">
+                  Page {page} of {totalPages}
+                </p>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage(page + 1)}
+                  className="text-xs px-3 py-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-40 touch-manipulation"
+                >
+                  Next â†’
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

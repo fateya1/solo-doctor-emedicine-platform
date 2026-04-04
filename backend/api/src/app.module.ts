@@ -17,6 +17,7 @@ import { VideoModule } from "./video/video.module";
 import { ReviewsModule } from "./reviews/reviews.module";
 import { PrescriptionsModule } from "./prescriptions/prescriptions.module";
 import { MedicalRecordsModule } from "./medical-records/medical-records.module";
+import { AuditModule } from "./audit/audit.module";
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { MedicalRecordsModule } from "./medical-records/medical-records.module";
     ScheduleModule.forRoot(),
     PrismaModule,
     EmailModule,
+    AuditModule,
     AuthModule,
     UsersModule,
     AppointmentsModule,

@@ -57,6 +57,25 @@ enum OnboardingStep {
   COMPLETE
 }
 
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  REGISTER
+  PASSWORD_RESET_REQUEST
+  PASSWORD_RESET_COMPLETE
+  APPOINTMENT_BOOKED
+  APPOINTMENT_CANCELLED
+  APPOINTMENT_STATUS_UPDATED
+  PRESCRIPTION_CREATED
+  PRESCRIPTION_UPDATED
+  CONSULTATION_NOTE_SAVED
+  REVIEW_SUBMITTED
+  PROFILE_UPDATED
+  SLOT_CREATED
+  VIDEO_SESSION_STARTED
+  ADMIN_ACTION
+}
+
 model Tenant {
   id        String   @id @default(uuid())
   name      String
@@ -86,6 +105,7 @@ model User {
   tenant         Tenant          @relation(fields: [tenantId], references: [id])
   doctorProfile  DoctorProfile?
   patientProfile PatientProfile?
+  auditLogs      AuditLog[]
 
   @@unique([tenantId, email])
   @@index([tenantId])
@@ -205,11 +225,11 @@ model Appointment {
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
-  patient           PatientProfile    @relation(fields: [patientId], references: [id])
-  availabilitySlot  AvailabilitySlot  @relation(fields: [slotId], references: [id])
-  review            Review?
-  prescription      Prescription?
-  consultationNote  ConsultationNote?
+  patient          PatientProfile    @relation(fields: [patientId], references: [id])
+  availabilitySlot AvailabilitySlot  @relation(fields: [slotId], references: [id])
+  review           Review?
+  prescription     Prescription?
+  consultationNote ConsultationNote?
 
   @@index([patientId])
   @@index([slotId])
@@ -275,4 +295,25 @@ model ConsultationNote {
   @@index([doctorProfileId])
   @@index([patientProfileId])
   @@map("consultation_notes")
+}
+
+model AuditLog {
+  id         String      @id @default(uuid())
+  userId     String?
+  action     AuditAction
+  entity     String?
+  entityId   String?
+  ipAddress  String?
+  userAgent  String?
+  metadata   Json?
+  success    Boolean     @default(true)
+  error      String?
+  createdAt  DateTime    @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
 }
