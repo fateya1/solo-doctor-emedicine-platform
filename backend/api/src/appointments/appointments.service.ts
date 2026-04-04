@@ -92,6 +92,9 @@ export class AppointmentsService {
       where: { patientId: patientProfile.id },
       include: {
         availabilitySlot: { include: { doctor: { include: { user: true } } } },
+        review: true,
+        review: true,
+        review: true,
       },
       orderBy: { createdAt: "desc" },
     });

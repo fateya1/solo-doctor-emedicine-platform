@@ -2,11 +2,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Clock, User, LogOut, Stethoscope, Loader2, Search, X, Menu, Phone, CheckCircle } from "lucide-react";
+import { Calendar, Clock, User, LogOut, Stethoscope, Loader2, Search, X, Menu, Phone, CheckCircle, Star } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 import { VideoButton } from "@/components/video-button";
+import { ReviewModal } from "@/components/review-modal";
 type Tab = "find-doctors" | "appointments";
 
 export default function PatientDashboard() {
@@ -22,6 +23,7 @@ export default function PatientDashboard() {
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [phoneInput, setPhoneInput] = useState("");
   const [phoneSaved, setPhoneSaved] = useState(false);
+  const [reviewingAppt, setReviewingAppt] = useState<{ id: string; doctorName: string } | null>(null);
 
   useEffect(() => {
     if (_hasHydrated && !token) router.push("/auth/login");
@@ -257,6 +259,25 @@ export default function PatientDashboard() {
                         appt.status === "NO_SHOW" ? "bg-slate-100 text-slate-500" :
                         "bg-amber-50 text-amber-700"
                       }`}>{appt.status}</span>
+
+                      {appt.status === "COMPLETED" && !appt.review && (
+                        <button
+                          onClick={() => setReviewingAppt({
+                            id: appt.id,
+                            doctorName: appt.availabilitySlot?.doctor?.user?.fullName ?? "Doctor",
+                          })}
+                          className="flex items-center gap-1 text-xs bg-amber-50 text-amber-700 hover:bg-amber-100 px-3 py-2 rounded-lg touch-manipulation"
+                        >
+                          <Star className="w-3 h-3" /> Rate
+                        </button>
+                      )}
+                      {appt.status === "COMPLETED" && appt.review && (
+                        <div className="flex items-center gap-1 text-xs text-slate-500">
+                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                          <span>{appt.review.rating}/5</span>
+                        </div>
+                      )}
+
                       {appt.status === "CONFIRMED" && (
                         cancellingId === appt.id ? (
                           <div className="flex gap-1">
@@ -290,6 +311,14 @@ export default function PatientDashboard() {
           </div>
         )}
       </div>
+
+      {reviewingAppt && (
+        <ReviewModal
+          appointmentId={reviewingAppt.id}
+          doctorName={reviewingAppt.doctorName}
+          onClose={() => setReviewingAppt(null)}
+        />
+      )}
 
       {showPhoneModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
@@ -372,6 +401,12 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
           <div className="flex gap-3 mt-2 text-xs text-slate-500 flex-wrap">
             {doctor.yearsOfExperience && <span>{doctor.yearsOfExperience} yrs exp</span>}
             {doctor.consultationFee && <span>KES {Number(doctor.consultationFee).toLocaleString()}</span>}
+            {doctor.averageRating > 0 && (
+              <span className="flex items-center gap-1">
+                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                {doctor.averageRating} ({doctor.totalReviews})
+              </span>
+            )}
           </div>
         </div>
       </div>
