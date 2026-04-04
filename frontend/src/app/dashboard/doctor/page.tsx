@@ -323,6 +323,13 @@ export default function DoctorDashboard() {
                           </button>
                         </div>
                       )}
+                        {appt.status === "COMPLETED" && (
+                          <button
+                            onClick={() => setFollowUpAppt({ id: appt.id, patientName: appt.patient?.user?.fullName ?? "Patient" })}
+                            className="flex items-center gap-1.5 text-xs bg-brand-50 text-brand-700 hover:bg-brand-100 px-3 py-1.5 rounded-lg transition-colors font-medium whitespace-nowrap">
+                            📅 Follow-up
+                          </button>
+                        )}
                     </div>
                   </div>
                 ))}
