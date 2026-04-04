@@ -235,4 +235,81 @@ export class AppointmentsService {
       return cancelled;
     });
   }
+  async scheduleFollowUp(userId: string, dto: { appointmentId: string; slotId: string; reason?: string }) {
+    const doctorProfile = await this.prisma.doctorProfile.findUnique({
+      where: { userId },
+      include: { user: true },
+    });
+    if (!doctorProfile) throw new NotFoundException("Doctor profile not found");
+
+    // Verify original appointment belongs to this doctor
+    const original = await this.prisma.appointment.findUnique({
+      where: { id: dto.appointmentId },
+      include: {
+        availabilitySlot: true,
+        patient: { include: { user: true } },
+      },
+    });
+    if (!original) throw new NotFoundException("Original appointment not found");
+    if (original.availabilitySlot.doctorId !== doctorProfile.id) {
+      throw new BadRequestException("Not authorized for this appointment");
+    }
+
+    // Book the follow-up slot
+    return this.prisma.$transaction(async (tx) => {
+      const slot = await tx.availabilitySlot.findUnique({
+        where: { id: dto.slotId },
+        include: { appointment: true },
+      });
+      if (!slot) throw new NotFoundException("Slot not found");
+      if (!slot.isAvailable || slot.appointment) {
+        throw new BadRequestException("Slot is no longer available");
+      }
+
+      const followUp = await tx.appointment.create({
+        data: {
+          patientId: original.patientId,
+          slotId: dto.slotId,
+          reason: dto.reason ?? "Follow-up appointment",
+          status: AppointmentStatus.CONFIRMED,
+        },
+      });
+
+      await tx.availabilitySlot.update({
+        where: { id: dto.slotId },
+        data: { isAvailable: false },
+      });
+
+      const dateStr = slot.startTime.toLocaleString("en-KE", { dateStyle: "full", timeStyle: "short" });
+
+      // Notify patient by email
+      this.emailService.sendFollowUpNotification(
+        original.patient.user.email,
+        original.patient.user.fullName,
+        doctorProfile.user.fullName,
+        slot.startTime,
+        dto.reason ?? "Follow-up appointment",
+      ).catch(() => {});
+
+      // SMS if phone exists
+      if (original.patient.phone) {
+        this.smsService.sendAppointmentConfirmationSms(
+          original.patient.phone,
+          original.patient.user.fullName,
+          doctorProfile.user.fullName,
+          dateStr,
+        ).catch(() => {});
+      }
+
+      this.auditService.log({
+        userId,
+        action: "APPOINTMENT_BOOKED" as any,
+        entity: "Appointment",
+        entityId: followUp.id,
+        metadata: { type: "follow_up", originalAppointmentId: dto.appointmentId },
+      }).catch(() => {});
+
+      return followUp;
+    });
+  }
 }

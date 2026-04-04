@@ -33,6 +33,11 @@ export class AppointmentsController {
     return this.service.updateAppointmentStatus(id, req.user.sub, body.status);
   }
 
+  @Post(":id/follow-up")
+  scheduleFollowUp(@Req() req: any, @Param("id") id: string, @Body() body: { slotId: string; reason?: string }) {
+    return this.service.scheduleFollowUp(req.user.sub, { appointmentId: id, ...body });
+  }
+
   @Delete(":id/cancel")
   cancel(@Req() req: any, @Param("id") id: string, @Body() body?: { reason?: string }) {
     return this.service.cancelAppointment(id, req.user.sub, body?.reason);

@@ -23,6 +23,10 @@ export default function DoctorDashboard() {
   const [showAddSlot, setShowAddSlot] = useState(false);
   const [slotDate, setSlotDate] = useState("");
   const [slotTime, setSlotTime] = useState("09:00");
+  const [followUpAppt, setFollowUpAppt] = useState<{ id: string; patientName: string } | null>(null);
+  const [followUpSlotId, setFollowUpSlotId] = useState("");
+  const [followUpReason, setFollowUpReason] = useState("Follow-up appointment");
+  const [followUpSuccess, setFollowUpSuccess] = useState(false);
   const [slotDuration, setSlotDuration] = useState(60);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [prescribingAppt, setPrescribingAppt] = useState<{ id: string; patientName: string; existing?: any } | null>(null);
@@ -99,6 +103,23 @@ export default function DoctorDashboard() {
       refetchSlots();
     },
     onError: (err: any) => alert(err.response?.data?.message || "Failed to update status."),
+  });
+
+  const followUpMutation = useMutation({
+    mutationFn: ({ appointmentId, slotId, reason }: { appointmentId: string; slotId: string; reason: string }) =>
+      apiClient.post(`/appointments/${appointmentId}/follow-up`, { slotId, reason }),
+    onSuccess: () => {
+      setFollowUpSuccess(true);
+      queryClient.invalidateQueries({ queryKey: ["doctor-appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["my-slots", doctorProfileId] });
+      setTimeout(() => {
+        setFollowUpAppt(null);
+        setFollowUpSlotId("");
+        setFollowUpReason("Follow-up appointment");
+        setFollowUpSuccess(false);
+      }, 2000);
+    },
+    onError: (err: any) => alert(err.response?.data?.message || "Failed to schedule follow-up."),
   });
 
   if (!_hasHydrated) {
