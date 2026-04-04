@@ -44,7 +44,7 @@ export class PrescriptionsService {
       return this.prisma.prescription.update({
         where: { appointmentId: dto.appointmentId },
         data: {
-          medications: dto.medications,
+          medications: dto.medications as any,
           diagnosis: dto.diagnosis ?? null,
           notes: dto.notes ?? null,
           validUntil: dto.validUntil ? new Date(dto.validUntil) : null,
@@ -61,7 +61,7 @@ export class PrescriptionsService {
         appointmentId: dto.appointmentId,
         doctorProfileId: doctorProfile.id,
         patientProfileId: appointment.patientId,
-        medications: dto.medications,
+        medications: dto.medications as any,
         diagnosis: dto.diagnosis ?? null,
         notes: dto.notes ?? null,
         validUntil: dto.validUntil ? new Date(dto.validUntil) : null,
