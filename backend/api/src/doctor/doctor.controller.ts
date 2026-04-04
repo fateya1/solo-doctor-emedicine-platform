@@ -13,6 +13,12 @@ export class DoctorController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get("analytics")
+  getAnalytics(@Req() req: any) {
+    return this.service.getDoctorAnalytics(req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get("search")
   search(@Query("specialty") specialty?: string, @Query("name") name?: string) {
     return this.service.searchDoctors(specialty, name);

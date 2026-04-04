@@ -109,6 +109,7 @@ model DoctorProfile {
 
   user              User               @relation(fields: [userId], references: [id])
   availabilitySlots AvailabilitySlot[]
+  reviews           Review[]
 
   @@map("doctor_profiles")
 }
@@ -127,6 +128,7 @@ model PatientProfile {
 
   user         User          @relation(fields: [userId], references: [id])
   appointments Appointment[]
+  reviews      Review[]
 
   @@map("patient_profiles")
 }
@@ -201,8 +203,26 @@ model Appointment {
 
   patient          PatientProfile   @relation(fields: [patientId], references: [id])
   availabilitySlot AvailabilitySlot @relation(fields: [slotId], references: [id])
+  review           Review?
 
   @@index([patientId])
   @@index([slotId])
   @@map("appointments")
+}
+model Review {
+  id              String        @id @default(uuid())
+  doctorProfileId String
+  patientProfileId String
+  appointmentId   String        @unique
+  rating          Int
+  comment         String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  doctorProfile   DoctorProfile  @relation(fields: [doctorProfileId], references: [id])
+  patientProfile  PatientProfile @relation(fields: [patientProfileId], references: [id])
+  appointment     Appointment    @relation(fields: [appointmentId], references: [id])
+
+  @@index([doctorProfileId])
+  @@map("reviews")
 }

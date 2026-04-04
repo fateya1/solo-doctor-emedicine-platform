@@ -1,4 +1,4 @@
-﻿import { Module } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { PrismaModule } from "./prisma/prisma.module";
@@ -14,6 +14,7 @@ import { SubscriptionModule } from "./subscription/subscription.module";
 import { OnboardingModule } from "./onboarding/onboarding.module";
 import { SchedulerModule } from "./scheduler/scheduler.module";
 import { VideoModule } from "./video/video.module";
+import { ReviewsModule } from "./reviews/reviews.module";
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { VideoModule } from "./video/video.module";
     OnboardingModule,
     SchedulerModule,
     VideoModule,
+    ReviewsModule,
   ],
 })
 export class AppModule {}
