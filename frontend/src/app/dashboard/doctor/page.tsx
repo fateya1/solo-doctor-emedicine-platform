@@ -590,6 +590,77 @@ export default function DoctorDashboard() {
           onClose={() => setNotingAppt(null)}
         />
       )}
+
+      {/* Follow-up scheduling modal */}
+      {followUpAppt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            {followUpSuccess ? (
+              <div className="text-center py-6">
+                <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-7 h-7 text-green-600" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-1">Follow-up Scheduled!</h3>
+                <p className="text-slate-500 text-sm">Patient has been notified by email and SMS.</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">Schedule Follow-up</h3>
+                    <p className="text-sm text-slate-500">for {followUpAppt.patientName}</p>
+                  </div>
+                  <button onClick={() => { setFollowUpAppt(null); setFollowUpSlotId(""); }}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100">
+                    <XCircle className="w-5 h-5 text-slate-400" />
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="label">Select available slot</label>
+                    {!slots?.filter((s: any) => !s.appointment).length ? (
+                      <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-sm text-amber-800">
+                        No available slots. Please add slots in the Availability tab first.
+                      </div>
+                    ) : (
+                      <select value={followUpSlotId} onChange={(e) => setFollowUpSlotId(e.target.value)}
+                        className="input">
+                        <option value="">— Select a slot —</option>
+                        {slots?.filter((s: any) => !s.appointment).map((slot: any) => (
+                          <option key={slot.id} value={slot.id}>
+                            {format(new Date(slot.startTime), "EEEE, MMM d yyyy · h:mm a")}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                  <div>
+                    <label className="label">Reason for follow-up</label>
+                    <input value={followUpReason} onChange={(e) => setFollowUpReason(e.target.value)}
+                      placeholder="e.g. Review test results, medication check..."
+                      className="input" />
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <button onClick={() => { setFollowUpAppt(null); setFollowUpSlotId(""); }}
+                      className="btn-secondary flex-1">Cancel</button>
+                    <button
+                      onClick={() => followUpMutation.mutate({
+                        appointmentId: followUpAppt.id,
+                        slotId: followUpSlotId,
+                        reason: followUpReason,
+                      })}
+                      disabled={!followUpSlotId || followUpMutation.isPending}
+                      className="btn-primary flex-1 flex items-center justify-center gap-2">
+                      {followUpMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                      {followUpMutation.isPending ? "Scheduling..." : "Schedule Follow-up"}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
