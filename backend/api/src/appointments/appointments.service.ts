@@ -93,8 +93,6 @@ export class AppointmentsService {
       include: {
         availabilitySlot: { include: { doctor: { include: { user: true } } } },
         review: true,
-        review: true,
-        review: true,
       },
       orderBy: { createdAt: "desc" },
     });
