@@ -142,7 +142,7 @@ export default function DoctorDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* ── Header ── */}
+      {/* Header */}
       <header className="bg-white border-b border-slate-100 px-4 sm:px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -181,7 +181,7 @@ export default function DoctorDashboard() {
       </header>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* ── Profile card ── */}
+        {/* Profile card */}
         {profile && (
           <div className="card mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -210,7 +210,7 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* ── Stats grid: 2 cols mobile → 4 cols desktop ── */}
+        {/* Stats grid: 2 cols mobile → 4 cols desktop */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {[
             { icon: Calendar, label: "Total appointments", value: appointments?.length ?? 0, color: "bg-purple-50 text-purple-600" },
@@ -228,7 +228,7 @@ export default function DoctorDashboard() {
           ))}
         </div>
 
-        {/* ── Tabs: horizontally scrollable on mobile ── */}
+        {/* Tabs: horizontally scrollable on mobile */}
         <div className="mb-6 overflow-x-auto">
           <div className="flex gap-1 bg-white border border-slate-100 rounded-xl p-1 w-max min-w-full sm:w-fit sm:min-w-0">
             {tabs.map(({ key, label }) => (
@@ -242,7 +242,7 @@ export default function DoctorDashboard() {
           </div>
         </div>
 
-        {/* ── Appointments Tab ── */}
+        {/* Appointments Tab */}
         {tab === "appointments" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5">Patient Appointments</h2>
@@ -365,7 +365,7 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* ── Slots Tab ── */}
+        {/* Slots Tab */}
         {tab === "slots" && (
           <div className="card">
             {/* Sub-tab switcher */}
@@ -450,7 +450,7 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* ── Analytics Tab ── */}
+        {/* Analytics Tab */}
         {tab === "analytics" && (
           <div className="space-y-6">
             {!analytics ? (
@@ -602,7 +602,7 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* ── Subscription Tab ── */}
+        {/* Subscription Tab */}
         {tab === "subscription" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5 flex items-center gap-2">
@@ -677,7 +677,7 @@ export default function DoctorDashboard() {
         )}
       </div>
 
-      {/* ── Modals ── */}
+      {/* Modals */}
       {prescriptionAppt && (
         <PrescriptionModal
           appointmentId={prescriptionAppt.id}
@@ -708,8 +708,8 @@ export default function DoctorDashboard() {
       )}
     </div>
   );
-} — read-only panel for doctors, shown inline in appointment card
-// ─────────────────────────────────────────────────────────────────────────────
+}
+//
 function IntakeFormView({ form }: { form: any }) {
   const medications = Array.isArray(form.medications) ? form.medications : [];
   const activeMeds = medications.filter((m: any) => m.name?.trim());
