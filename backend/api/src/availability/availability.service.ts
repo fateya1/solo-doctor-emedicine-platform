@@ -1,10 +1,14 @@
-﻿import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateSlotsDto } from "./dto/create-slots.dto";
+import { WaitlistService } from "../waitlist/waitlist.service";
 
 @Injectable()
 export class AvailabilityService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly waitlistService: WaitlistService,
+  ) {}
 
   async createSlots(doctorId: string, dto: CreateSlotsDto) {
     const from = new Date(dto.from);

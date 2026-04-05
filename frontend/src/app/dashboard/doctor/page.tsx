@@ -10,6 +10,7 @@ import {
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
+import { AvailabilityTemplateManager } from "@/components/availability-template-manager";
 
 type Tab = "appointments" | "slots" | "analytics" | "subscription";
 
@@ -23,6 +24,7 @@ export default function DoctorDashboard() {
   const [slotTime, setSlotTime] = useState("09:00");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedIntakeId, setExpandedIntakeId] = useState<string | null>(null);
+  const [slotView, setSlotView] = useState<"slots" | "templates">("slots");
 
   useEffect(() => {
     if (_hasHydrated && !token) router.push("/auth/login");
@@ -306,53 +308,79 @@ export default function DoctorDashboard() {
         {/* ── Slots Tab ── */}
         {tab === "slots" && (
           <div className="card">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="font-semibold text-slate-900">Availability Slots</h2>
-              <button onClick={() => setShowAddSlot(!showAddSlot)} disabled={!doctorProfileId}
-                className="btn-primary text-sm flex items-center gap-1.5 disabled:opacity-50 touch-manipulation">
-                <Plus className="w-4 h-4" /> Add slot
-              </button>
+            {/* Sub-tab switcher */}
+            <div className="flex gap-1 bg-slate-100 rounded-xl p-1 mb-5 w-fit">
+              {(["slots", "templates"] as const).map((v) => (
+                <button key={v} onClick={() => setSlotView(v)}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all touch-manipulation capitalize ${
+                    slotView === v ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                  }`}>
+                  {v === "slots" ? "My Slots" : "Templates"}
+                </button>
+              ))}
             </div>
-            {showAddSlot && (
-              <div className="bg-brand-50 border border-brand-100 rounded-xl p-4 mb-5">
-                <h3 className="text-sm font-medium text-brand-800 mb-3">New availability slot (1 hour)</h3>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <input type="date" value={slotDate} onChange={(e) => setSlotDate(e.target.value)}
-                    className="input flex-1" min={new Date().toISOString().split("T")[0]} />
-                  <input type="time" value={slotTime} onChange={(e) => setSlotTime(e.target.value)}
-                    className="input sm:w-36" />
-                  <button onClick={() => addSlotMutation.mutate()}
-                    disabled={!slotDate || addSlotMutation.isPending}
-                    className="btn-primary flex items-center justify-center gap-1.5 touch-manipulation">
-                    {addSlotMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Save
+
+            {/* My Slots view */}
+            {slotView === "slots" && (
+              <>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="font-semibold text-slate-900">Availability Slots</h2>
+                  <button onClick={() => setShowAddSlot(!showAddSlot)} disabled={!doctorProfileId}
+                    className="btn-primary text-sm flex items-center gap-1.5 disabled:opacity-50 touch-manipulation">
+                    <Plus className="w-4 h-4" /> Add slot
                   </button>
                 </div>
-              </div>
-            )}
-            {!slots?.length ? (
-              <p className="text-slate-400 text-sm">No slots added yet.</p>
-            ) : (
-              <div className="space-y-2">
-                {slots.map((slot: any) => (
-                  <div key={slot.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">
-                        {format(new Date(slot.startTime), "EEEE, MMM d yyyy")}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {format(new Date(slot.startTime), "h:mm a")} – {format(new Date(slot.endTime), "h:mm a")}
-                      </p>
+                {showAddSlot && (
+                  <div className="bg-brand-50 border border-brand-100 rounded-xl p-4 mb-5">
+                    <h3 className="text-sm font-medium text-brand-800 mb-3">New availability slot (1 hour)</h3>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <input type="date" value={slotDate} onChange={(e) => setSlotDate(e.target.value)}
+                        className="input flex-1" min={new Date().toISOString().split("T")[0]} />
+                      <input type="time" value={slotTime} onChange={(e) => setSlotTime(e.target.value)}
+                        className="input sm:w-36" />
+                      <button onClick={() => addSlotMutation.mutate()}
+                        disabled={!slotDate || addSlotMutation.isPending}
+                        className="btn-primary flex items-center justify-center gap-1.5 touch-manipulation">
+                        {addSlotMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                        Save
+                      </button>
                     </div>
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                      !slot.appointment ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"
-                    }`}>
-                      {!slot.appointment ? "Available" : "Booked"}
-                    </span>
                   </div>
-                ))}
-              </div>
+                )}
+                {!slots?.length ? (
+                  <div className="text-center py-8">
+                    <p className="text-slate-400 text-sm mb-3">No slots added yet.</p>
+                    <button onClick={() => setSlotView("templates")}
+                      className="text-sm text-brand-600 hover:underline touch-manipulation">
+                      Use a weekly template instead →
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {slots.map((slot: any) => (
+                      <div key={slot.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                        <div>
+                          <p className="text-sm font-medium text-slate-800">
+                            {format(new Date(slot.startTime), "EEEE, MMM d yyyy")}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {format(new Date(slot.startTime), "h:mm a")} – {format(new Date(slot.endTime), "h:mm a")}
+                          </p>
+                        </div>
+                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                          !slot.appointment ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"
+                        }`}>
+                          {!slot.appointment ? "Available" : "Booked"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
+
+            {/* Templates view */}
+            {slotView === "templates" && <AvailabilityTemplateManager />}
           </div>
         )}
 

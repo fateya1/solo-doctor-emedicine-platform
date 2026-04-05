@@ -142,6 +142,7 @@ model DoctorProfile {
   prescriptions     Prescription[]
   consultationNotes ConsultationNote[]
   waitlistEntries   Waitlist[]
+  availabilityTemplates AvailabilityTemplate[]
 
   @@map("doctor_profiles")
 }
@@ -331,6 +332,40 @@ model ConsultationNote {
   @@index([doctorProfileId])
   @@index([patientProfileId])
   @@map("consultation_notes")
+}
+
+model AvailabilityTemplate {
+  id        String   @id @default(uuid())
+  doctorId  String
+  name      String
+  isActive  Boolean  @default(true)
+  timezone  String   @default("Africa/Nairobi")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  doctor DoctorProfile              @relation(fields: [doctorId], references: [id])
+  slots  AvailabilityTemplateSlot[]
+
+  @@index([doctorId])
+  @@map("availability_templates")
+}
+
+model AvailabilityTemplateSlot {
+  id           String   @id @default(uuid())
+  templateId   String
+  dayOfWeek    Int      // 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat
+  startHour    Int
+  startMinute  Int      @default(0)
+  endHour      Int
+  endMinute    Int      @default(0)
+  slotMinutes  Int      @default(60)
+  breakMinutes Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  template AvailabilityTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@map("availability_template_slots")
 }
 
 model Waitlist {
