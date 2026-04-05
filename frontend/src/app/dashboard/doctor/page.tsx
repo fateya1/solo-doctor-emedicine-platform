@@ -5,12 +5,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar, Users, Clock, LogOut, Stethoscope, Plus, Loader2,
   CheckCircle, XCircle, AlertCircle, CreditCard, TrendingUp,
-  BarChart2, ArrowUp, ArrowDown, Menu, X, ClipboardList
+  BarChart2, ArrowUp, ArrowDown, Menu, X, ClipboardList, FileText
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 import { AvailabilityTemplateManager } from "@/components/availability-template-manager";
+import { VideoButton } from "@/components/video-button";
+import { PrescriptionModal } from "@/components/prescription-modal";
+import { ConsultationNotesModal } from "@/components/consultation-notes-modal";
 
 type Tab = "appointments" | "slots" | "analytics" | "subscription";
 
@@ -25,6 +28,8 @@ export default function DoctorDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [slotDuration, setSlotDuration] = useState(60);
   const [expandedIntakeId, setExpandedIntakeId] = useState<string | null>(null);
+  const [prescribingAppt, setPrescribingAppt] = useState<{ id: string; patientName: string; existing?: any } | null>(null);
+  const [notingAppt, setNotingAppt] = useState<{ id: string; patientName: string } | null>(null);
   const [slotView, setSlotView] = useState<"slots" | "templates">("slots");
 
   useEffect(() => {
@@ -272,6 +277,25 @@ export default function DoctorDashboard() {
                       )}
                       {!appt.intakeForm && appt.status === "CONFIRMED" && (
                         <span className="text-xs text-slate-400 italic">No intake form yet</span>
+                      )}
+                      {(appt.status === "CONFIRMED" || appt.status === "COMPLETED") && (
+                        <div className="flex gap-1">
+                          <VideoButton appointmentId={appt.id} role="doctor" />
+                          <button
+                            onClick={() => setPrescribingAppt({ id: appt.id, patientName: appt.patient?.user?.fullName ?? "Patient", existing: appt.prescription ?? undefined })}
+                            className="flex items-center gap-1 text-xs bg-teal-50 text-teal-700 hover:bg-teal-100 px-3 py-2 rounded-lg touch-manipulation"
+                          >
+                            <FileText className="w-3 h-3" />
+                            {appt.prescription ? "Edit Rx" : "Write Rx"}
+                          </button>
+                          <button
+                            onClick={() => setNotingAppt({ id: appt.id, patientName: appt.patient?.user?.fullName ?? "Patient" })}
+                            className="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-2 rounded-lg touch-manipulation"
+                          >
+                            <ClipboardList className="w-3 h-3" />
+                            {appt.consultationNote ? "Edit Notes" : "Add Notes"}
+                          </button>
+                        </div>
                       )}
                       {appt.status === "CONFIRMED" && (
                         <div className="flex gap-1">
@@ -629,6 +653,21 @@ export default function DoctorDashboard() {
       </div>
     </div>
   );
+      {prescribingAppt && (
+        <PrescriptionModal
+          appointmentId={prescribingAppt!.id}
+          patientName={prescribingAppt!.patientName}
+          existingPrescription={prescribingAppt!.existing}
+          onClose={() => setPrescribingAppt(null)}
+        />
+      )}
+      {notingAppt && (
+        <ConsultationNotesModal
+          appointmentId={notingAppt!.id}
+          patientName={notingAppt!.patientName}
+          onClose={() => setNotingAppt(null)}
+        />
+      )}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
