@@ -275,7 +275,7 @@ export default function AdminDashboard() {
                     <p className="text-sm font-semibold text-slate-800">{t.name}</p>
                     <p className="text-xs text-slate-500">Slug: {t.slug}</p>
                     <p className="text-xs text-slate-400">
-                      {t._count.users} users · Created {format(new Date(t.createdAt), "MMM d, yyyy")}
+                      {t._count.users} users  ·  Created {format(new Date(t.createdAt), "MMM d, yyyy")}
                     </p>
                     {t.subscription && (
                       <div className="flex gap-2 mt-1 flex-wrap">
@@ -338,7 +338,7 @@ export default function AdminDashboard() {
                     <div>
                       <p className="text-sm font-medium text-slate-800">{d.user.fullName}</p>
                       <p className="text-xs text-slate-500">{d.user.email}</p>
-                      <p className="text-xs text-slate-400">{d.specialty ?? "General Practice"} · Joined {format(new Date(d.user.createdAt), "MMM d, yyyy")}</p>
+                      <p className="text-xs text-slate-400">{d.specialty ?? "General Practice"}  ·  Joined {format(new Date(d.user.createdAt), "MMM d, yyyy")}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${d.isVerified ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-600"}`}>
@@ -370,7 +370,7 @@ export default function AdminDashboard() {
                   <div>
                     <p className="text-sm font-medium text-slate-800">{p.user.fullName}</p>
                     <p className="text-xs text-slate-500">{p.user.email}</p>
-                    <p className="text-xs text-slate-400">{p._count.appointments} appointments · Joined {format(new Date(p.user.createdAt), "MMM d, yyyy")}</p>
+                    <p className="text-xs text-slate-400">{p._count.appointments} appointments  ·  Joined {format(new Date(p.user.createdAt), "MMM d, yyyy")}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${p.user.isActive ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
@@ -400,7 +400,7 @@ export default function AdminDashboard() {
                       {a.patient?.user?.fullName} â†’ Dr. {a.availabilitySlot?.doctor?.user?.fullName}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {a.availabilitySlot?.startTime ? format(new Date(a.availabilitySlot.startTime), "MMM d, yyyy · h:mm a") : "N/A"}
+                      {a.availabilitySlot?.startTime ? format(new Date(a.availabilitySlot.startTime), "MMM d, yyyy  ·  h:mm a") : "N/A"}
                     </p>
                     <p className="text-xs text-slate-400">{a.reason ?? "General consultation"}</p>
                   </div>
@@ -430,7 +430,7 @@ export default function AdminDashboard() {
                       Period: {format(new Date(s.currentPeriodStart), "MMM d")} â€“ {format(new Date(s.currentPeriodEnd), "MMM d, yyyy")}
                     </p>
                     <p className="text-xs text-slate-400">
-                      {s.payments?.length ?? 0} payments · Last updated {format(new Date(s.updatedAt), "MMM d, yyyy")}
+                      {s.payments?.length ?? 0} payments  ·  Last updated {format(new Date(s.updatedAt), "MMM d, yyyy")}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -685,7 +685,7 @@ function AuditLogsPanel({
                           {/* Timestamp */}
                           <p className="text-xs text-slate-400 whitespace-nowrap shrink-0">
                             {log.createdAt
-                              ? format(new Date(log.createdAt), "MMM d, yyyy · h:mm a")
+                              ? format(new Date(log.createdAt), "MMM d, yyyy  ·  h:mm a")
                               : "â€”"}
                           </p>
                         </div>
