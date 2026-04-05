@@ -14,12 +14,14 @@ import { PrescriptionDownload } from "@/components/prescription-download";
 import { ReviewModal } from "@/components/review-modal";
 import { MedicalHistory } from "@/components/medical-history";
 import { IntakeFormModal } from "@/components/intake-form-modal";
-import { WaitlistButton, WaitlistPanel } from "@/components/waitlist";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useT } from "@/lib/i18n";
 
-type Tab = "find-doctors" | "appointments" | "history" | "waitlist";
+type Tab = "find-doctors" | "appointments" | "history";
 
 export default function PatientDashboard() {
   const { user, token, logout, _hasHydrated } = useAuthStore();
+  const t = useT();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("find-doctors");
@@ -113,10 +115,11 @@ export default function PatientDashboard() {
             <span className="font-display font-bold text-lg">SoloDoc</span>
           </div>
           <div className="hidden sm:flex items-center gap-4">
-            <span className="text-sm text-slate-600">Hi, {user?.fullName?.split(" ")[0]}</span>
+            <LanguageSwitcher />
+            <span className="text-sm text-slate-600">{t("patient", "hi")}, {user?.fullName?.split(" ")[0]}</span>
             <button onClick={() => { logout(); router.push("/auth/login"); }}
               className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-red-500 transition-colors">
-              <LogOut className="w-4 h-4" /> Sign out
+              <LogOut className="w-4 h-4" /> {t("common", "signOut")}
             </button>
           </div>
           <button className="sm:hidden p-2 rounded-lg hover:bg-slate-50"
@@ -126,10 +129,11 @@ export default function PatientDashboard() {
         </div>
         {mobileMenuOpen && (
           <div className="sm:hidden mt-3 pt-3 border-t border-slate-100 flex flex-col gap-3 pb-2">
-            <p className="text-sm text-slate-600 px-1">Hi, {user?.fullName?.split(" ")[0]}</p>
+            <LanguageSwitcher variant="full" className="px-1" />
+            <p className="text-sm text-slate-600 px-1">{t("patient", "hi")}, {user?.fullName?.split(" ")[0]}</p>
             <button onClick={() => { logout(); router.push("/auth/login"); }}
               className="flex items-center gap-1.5 text-sm text-red-500 px-1">
-              <LogOut className="w-4 h-4" /> Sign out
+              <LogOut className="w-4 h-4" /> {t("common", "signOut")}
             </button>
           </div>
         )}
@@ -181,10 +185,9 @@ export default function PatientDashboard() {
 
         <div className="flex gap-1 bg-white border border-slate-100 rounded-xl p-1 mb-6 w-full sm:w-fit">
           {([
-            { key: "find-doctors" as Tab, label: "Find Doctors" },
-            { key: "appointments" as Tab, label: "My Appointments" },
-            { key: "history" as Tab, label: "Medical History" },
-            { key: "waitlist" as Tab, label: "My Waitlist" },
+            { key: "find-doctors" as Tab, label: t("nav", "findDoctors") },
+            { key: "appointments" as Tab, label: t("nav", "myAppointments") },
+            { key: "history" as Tab, label: t("nav", "medicalHistory") },
           ]).map(({ key, label }) => (
             <button key={key} onClick={() => setTab(key)}
               className={`flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-medium transition-all touch-manipulation ${
@@ -374,7 +377,6 @@ export default function PatientDashboard() {
         )}
 
         {tab === "history" && <MedicalHistory />}
-        {tab === "waitlist" && <WaitlistPanel />}
       </div>
 
       {intakeFormAppt && (
@@ -529,12 +531,9 @@ function DoctorCard({ doctor, onBooked }: {
           </div>
         </div>
       ) : (
-        <div className="space-y-2">
-          <p className="text-xs text-slate-400 bg-slate-50 rounded-lg p-3 text-center">
-            No available slots at the moment
-          </p>
-          <WaitlistButton doctorProfileId={doctor.id} doctorName={doctor.user?.fullName ?? "Doctor"} />
-        </div>
+        <p className="text-xs text-slate-400 bg-slate-50 rounded-lg p-3 text-center">
+          No available slots at the moment
+        </p>
       )}
     </div>
   );

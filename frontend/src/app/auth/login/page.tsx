@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -8,6 +8,8 @@ import { z } from "zod";
 import { Stethoscope, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
+import { useT } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 const schema = z.object({
   email: z.string().email("Invalid email"),
@@ -16,6 +18,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
+  const t = useT();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -30,21 +33,13 @@ export default function LoginPage() {
     try {
       const res = await apiClient.post("/auth/login", data);
       const { accessToken, user } = res.data;
-
-      // 1. Write auth state into the store (this also persists to localStorage)
       setAuth(accessToken, user);
-
-      // 2. Give Zustand persist one tick to flush to localStorage before navigating
       await new Promise((resolve) => setTimeout(resolve, 50));
-
       const role = user.role;
       if (role === "DOCTOR") {
         try {
           const status = await apiClient.get("/onboarding/status");
-          if (!status.data.isComplete) {
-            router.replace("/onboarding");
-            return;
-          }
+          if (!status.data.isComplete) { router.replace("/onboarding"); return; }
         } catch {}
         router.replace("/dashboard/doctor");
       } else if (role === "PATIENT") {
@@ -55,7 +50,7 @@ export default function LoginPage() {
         router.replace("/");
       }
     } catch (err: any) {
-      const message = err.response?.data?.message || "Invalid credentials. Please try again.";
+      const message = err.response?.data?.message || t("auth", "invalidCredentials");
       setError(Array.isArray(message) ? message[0] : message);
     }
   };
@@ -63,13 +58,19 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-teal-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+        {/* Language switcher */}
+        <div className="flex justify-end mb-4">
+          <LanguageSwitcher />
+        </div>
+
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 bg-brand-600 rounded-2xl mb-4">
             <Stethoscope className="w-6 h-6 text-white" />
           </div>
-          <h1 className="font-display text-3xl font-bold text-slate-900">Welcome back</h1>
-          <p className="text-slate-500 mt-2">Sign in to your account</p>
+          <h1 className="font-display text-3xl font-bold text-slate-900">{t("auth", "welcomeBack")}</h1>
+          <p className="text-slate-500 mt-2">{t("auth", "signInSubtitle")}</p>
         </div>
+
         <div className="card">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {error && (
@@ -79,15 +80,15 @@ export default function LoginPage() {
               </div>
             )}
             <div>
-              <label className="label">Email address</label>
-              <input {...register("email")} type="email" placeholder="you@example.com" className="input" />
+              <label className="label">{t("auth", "emailAddress")}</label>
+              <input {...register("email")} type="email" placeholder={t("auth", "emailPlaceholder")} className="input" />
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
             </div>
             <div>
-              <label className="label">Password</label>
+              <label className="label">{t("auth", "password")}</label>
               <div className="relative">
                 <input {...register("password")} type={showPassword ? "text" : "password"}
-                  placeholder="Min. 8 characters" className="input pr-11" />
+                  placeholder={t("auth", "passwordPlaceholder")} className="input pr-11" />
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -98,15 +99,17 @@ export default function LoginPage() {
             <button type="submit" disabled={isSubmitting}
               className="btn-primary w-full flex items-center justify-center gap-2">
               {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isSubmitting ? "Signing in..." : "Sign in"}
+              {isSubmitting ? t("auth", "signingIn") : t("common", "signIn")}
             </button>
           </form>
           <p className="text-center text-sm text-slate-500 mt-6">
-            Don&apos;t have an account?{" "}
-            <Link href="/auth/register" className="text-brand-600 font-medium hover:underline">Sign up</Link>
+            {t("auth", "noAccount")}{" "}
+            <Link href="/auth/register" className="text-brand-600 font-medium hover:underline">{t("common", "signUp")}</Link>
           </p>
           <p className="text-center text-sm text-slate-500 mt-2">
-            <Link href="/auth/forgot-password" className="text-brand-600 font-medium hover:underline">Forgot password?</Link>
+            <Link href="/auth/forgot-password" className="text-brand-600 font-medium hover:underline">
+              {t("auth", "forgotPassword")}
+            </Link>
           </p>
         </div>
       </div>

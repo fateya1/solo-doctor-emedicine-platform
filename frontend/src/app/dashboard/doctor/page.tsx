@@ -11,11 +11,14 @@ import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 import { AvailabilityTemplateManager } from "@/components/availability-template-manager";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useT } from "@/lib/i18n";
 
 type Tab = "appointments" | "slots" | "analytics" | "subscription";
 
 export default function DoctorDashboard() {
   const { user, token, logout, _hasHydrated } = useAuthStore();
+  const t = useT();
   const router = useRouter();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("appointments");
@@ -144,10 +147,11 @@ export default function DoctorDashboard() {
           </div>
           {/* Desktop nav */}
           <div className="hidden sm:flex items-center gap-4">
-            <span className="text-sm text-slate-600">Dr. {user?.fullName?.split(" ").slice(-1)[0]}</span>
+            <LanguageSwitcher />
+            <span className="text-sm text-slate-600">{t("doctor", "dr")} {user?.fullName?.split(" ").slice(-1)[0]}</span>
             <button onClick={() => { logout(); router.push("/auth/login"); }}
               className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-red-500 transition-colors">
-              <LogOut className="w-4 h-4" /> Sign out
+              <LogOut className="w-4 h-4" /> {t("common", "signOut")}
             </button>
           </div>
           {/* Mobile hamburger */}
@@ -159,10 +163,11 @@ export default function DoctorDashboard() {
         {/* Mobile menu dropdown */}
         {mobileMenuOpen && (
           <div className="sm:hidden mt-3 pt-3 border-t border-slate-100 flex flex-col gap-3 pb-2">
-            <p className="text-sm text-slate-600 px-1">Dr. {user?.fullName}</p>
+            <LanguageSwitcher variant="full" className="px-1" />
+            <p className="text-sm text-slate-600 px-1">{t("doctor", "dr")} {user?.fullName}</p>
             <button onClick={() => { logout(); router.push("/auth/login"); }}
               className="flex items-center gap-1.5 text-sm text-red-500 px-1">
-              <LogOut className="w-4 h-4" /> Sign out
+              <LogOut className="w-4 h-4" /> {t("common", "signOut")}
             </button>
           </div>
         )}
