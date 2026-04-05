@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar, Users, Clock, LogOut, Stethoscope, Plus, Loader2,
   CheckCircle, XCircle, AlertCircle, CreditCard, TrendingUp,
-  BarChart2, ArrowUp, ArrowDown, Menu, X, ClipboardList, FileText
+  BarChart2, ArrowUp, ArrowDown, Menu, X, ClipboardList, FileText, CalendarPlus
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
@@ -14,6 +14,7 @@ import { AvailabilityTemplateManager } from "@/components/availability-template-
 import { VideoButton } from "@/components/video-button";
 import { PrescriptionModal } from "@/components/prescription-modal";
 import { ConsultationNotesModal } from "@/components/consultation-notes-modal";
+import { FollowUpModal } from "@/components/follow-up-modal";
 
 type Tab = "appointments" | "slots" | "analytics" | "subscription";
 
@@ -29,6 +30,7 @@ export default function DoctorDashboard() {
   const [slotDuration, setSlotDuration] = useState(60);
   const [expandedIntakeId, setExpandedIntakeId] = useState<string | null>(null);
   const [prescribingAppt, setPrescribingAppt] = useState<{ id: string; patientName: string; existing?: any } | null>(null);
+  const [followUpAppt, setFollowUpAppt] = useState<{ id: string; patientName: string } | null>(null);
   const [notingAppt, setNotingAppt] = useState<{ id: string; patientName: string } | null>(null);
   const [slotView, setSlotView] = useState<"slots" | "templates">("slots");
 
@@ -296,6 +298,15 @@ export default function DoctorDashboard() {
                             {appt.consultationNote ? "Edit Notes" : "Add Notes"}
                           </button>
                         </div>
+                      )}
+                      {appt.status === "COMPLETED" && (
+                        <button
+                          onClick={() => setFollowUpAppt({ id: appt.id, patientName: appt.patient?.user?.fullName ?? "Patient" })}
+                          className="flex items-center gap-1 text-xs bg-purple-50 text-purple-700 hover:bg-purple-100 px-3 py-2 rounded-lg touch-manipulation"
+                        >
+                          <CalendarPlus className="w-3 h-3" />
+                          Schedule Follow-up
+                        </button>
                       )}
                       {appt.status === "CONFIRMED" && (
                         <div className="flex gap-1">
@@ -653,6 +664,13 @@ export default function DoctorDashboard() {
       </div>
     </div>
   );
+      {followUpAppt && (
+        <FollowUpModal
+          appointmentId={followUpAppt!.id}
+          patientName={followUpAppt!.patientName}
+          onClose={() => setFollowUpAppt(null)}
+        />
+      )}
       {prescribingAppt && (
         <PrescriptionModal
           appointmentId={prescribingAppt!.id}
