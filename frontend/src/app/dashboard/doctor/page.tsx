@@ -23,6 +23,7 @@ export default function DoctorDashboard() {
   const [slotDate, setSlotDate] = useState("");
   const [slotTime, setSlotTime] = useState("09:00");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [slotDuration, setSlotDuration] = useState(60);
   const [expandedIntakeId, setExpandedIntakeId] = useState<string | null>(null);
   const [slotView, setSlotView] = useState<"slots" | "templates">("slots");
 
@@ -71,7 +72,7 @@ export default function DoctorDashboard() {
     mutationFn: async () => {
       if (!doctorProfileId) throw new Error("Doctor profile not loaded");
       const start = new Date(`${slotDate}T${slotTime}`);
-      const end = new Date(start.getTime() + 60 * 60_000);
+      const end = new Date(start.getTime() + slotDuration * 60_000);
       return apiClient.post(`/availability/slots?doctorId=${doctorProfileId}`, {
         from: start.toISOString(),
         to: end.toISOString(),
@@ -84,6 +85,7 @@ export default function DoctorDashboard() {
       setShowAddSlot(false);
       setSlotDate("");
       setSlotTime("09:00");
+      setSlotDuration(60);
     },
     onError: (err: any) => alert(err.response?.data?.message || "Failed to add slot."),
   });
@@ -336,8 +338,23 @@ export default function DoctorDashboard() {
                     <div className="flex flex-col sm:flex-row gap-3">
                       <input type="date" value={slotDate} onChange={(e) => setSlotDate(e.target.value)}
                         className="input flex-1" min={new Date().toISOString().split("T")[0]} />
-                      <input type="time" value={slotTime} onChange={(e) => setSlotTime(e.target.value)}
-                        className="input sm:w-36" />
+                  <select value={slotTime} onChange={(e) => setSlotTime(e.target.value)} className="input sm:w-44">
+                    {Array.from({ length: 48 }, (_, i) => {
+                      const h = Math.floor(i / 2);
+                      const m = i % 2 === 0 ? "00" : "30";
+                      const val = `${String(h).padStart(2, "0")}:${m}`;
+                      const period = h < 12 ? "AM" : "PM";
+                      const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+                      const label = `${String(h12).padStart(2, "0")}:${m} ${period}`;
+                      return <option key={val} value={val}>{label}</option>;
+                    })}
+                  </select>
+                  <select value={slotDuration} onChange={(e) => setSlotDuration(Number(e.target.value))} className="input sm:w-36">
+                    <option value={30}>30 min</option>
+                    <option value={60}>60 min</option>
+                    <option value={90}>90 min</option>
+                    <option value={120}>2 hours</option>
+                  </select>
                       <button onClick={() => addSlotMutation.mutate()}
                         disabled={!slotDate || addSlotMutation.isPending}
                         className="btn-primary flex items-center justify-center gap-1.5 touch-manipulation">
