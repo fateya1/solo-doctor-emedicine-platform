@@ -13,6 +13,10 @@ import { format } from "date-fns";
 import { AvailabilityTemplateManager } from "@/components/availability-template-manager";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useT } from "@/lib/i18n";
+import { PrescriptionModal } from "@/components/prescription-modal";
+import { ConsultationNotesModal } from "@/components/consultation-notes-modal";
+import { FollowUpModal } from "@/components/follow-up-modal";
+import { VideoButton } from "@/components/video-button";
 
 type Tab = "appointments" | "slots" | "analytics" | "subscription";
 
@@ -29,6 +33,9 @@ export default function DoctorDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedIntakeId, setExpandedIntakeId] = useState<string | null>(null);
   const [slotView, setSlotView] = useState<"slots" | "templates">("slots");
+  const [prescriptionAppt, setPrescriptionAppt] = useState<{ id: string; patientName: string; existing?: any } | null>(null);
+  const [notesAppt, setNotesAppt] = useState<{ id: string; patientName: string } | null>(null);
+  const [followUpAppt, setFollowUpAppt] = useState<{ id: string; patientName: string } | null>(null);
 
   useEffect(() => {
     if (_hasHydrated && !token) router.push("/auth/login");
@@ -278,8 +285,54 @@ export default function DoctorDashboard() {
                       {!appt.intakeForm && appt.status === "CONFIRMED" && (
                         <span className="text-xs text-slate-400 italic">No intake form yet</span>
                       )}
+                      {/* Prescription button */}
+                      {(appt.status === "COMPLETED" || appt.status === "CONFIRMED") && (
+                        <button
+                          onClick={() => setPrescriptionAppt({
+                            id: appt.id,
+                            patientName: appt.patient?.user?.fullName ?? "Patient",
+                            existing: appt.prescription,
+                          })}
+                          className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg touch-manipulation ${
+                            appt.prescription
+                              ? "bg-green-50 text-green-700 hover:bg-green-100"
+                              : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                          }`}
+                          title={appt.prescription ? "Edit prescription" : "Write prescription"}
+                        >
+                          💊 {appt.prescription ? "Rx" : "Rx+"}
+                        </button>
+                      )}
+                      {/* Consultation notes button */}
+                      {(appt.status === "COMPLETED" || appt.status === "CONFIRMED") && (
+                        <button
+                          onClick={() => setNotesAppt({
+                            id: appt.id,
+                            patientName: appt.patient?.user?.fullName ?? "Patient",
+                          })}
+                          className="flex items-center gap-1 text-xs bg-slate-50 text-slate-600 hover:bg-slate-100 px-2.5 py-1 rounded-lg touch-manipulation"
+                          title="Consultation notes (SOAP)"
+                        >
+                          📋 Notes
+                        </button>
+                      )}
+                      {/* Follow-up button */}
+                      {appt.status === "COMPLETED" && (
+                        <button
+                          onClick={() => setFollowUpAppt({
+                            id: appt.id,
+                            patientName: appt.patient?.user?.fullName ?? "Patient",
+                          })}
+                          className="flex items-center gap-1 text-xs bg-teal-50 text-teal-700 hover:bg-teal-100 px-2.5 py-1 rounded-lg touch-manipulation"
+                          title="Schedule follow-up"
+                        >
+                          📅 Follow-up
+                        </button>
+                      )}
+                      {/* Video + status buttons for CONFIRMED */}
                       {appt.status === "CONFIRMED" && (
                         <div className="flex gap-1">
+                          <VideoButton appointmentId={appt.id} role="doctor" />
                           <button onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "COMPLETED" })}
                             disabled={updateStatusMutation.isPending} title="Mark completed"
                             className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 touch-manipulation">
@@ -623,12 +676,39 @@ export default function DoctorDashboard() {
           </div>
         )}
       </div>
+
+      {/* ── Modals ── */}
+      {prescriptionAppt && (
+        <PrescriptionModal
+          appointmentId={prescriptionAppt.id}
+          patientName={prescriptionAppt.patientName}
+          existingPrescription={prescriptionAppt.existing}
+          onClose={() => {
+            setPrescriptionAppt(null);
+            queryClient.invalidateQueries({ queryKey: ["doctor-appointments"] });
+          }}
+        />
+      )}
+      {notesAppt && (
+        <ConsultationNotesModal
+          appointmentId={notesAppt.id}
+          patientName={notesAppt.patientName}
+          onClose={() => {
+            setNotesAppt(null);
+            queryClient.invalidateQueries({ queryKey: ["doctor-appointments"] });
+          }}
+        />
+      )}
+      {followUpAppt && (
+        <FollowUpModal
+          appointmentId={followUpAppt.id}
+          patientName={followUpAppt.patientName}
+          onClose={() => setFollowUpAppt(null)}
+        />
+      )}
     </div>
   );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// IntakeFormView — read-only panel for doctors, shown inline in appointment card
+} — read-only panel for doctors, shown inline in appointment card
 // ─────────────────────────────────────────────────────────────────────────────
 function IntakeFormView({ form }: { form: any }) {
   const medications = Array.isArray(form.medications) ? form.medications : [];

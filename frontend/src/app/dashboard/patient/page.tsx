@@ -16,6 +16,7 @@ import { MedicalHistory } from "@/components/medical-history";
 import { IntakeFormModal } from "@/components/intake-form-modal";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useT } from "@/lib/i18n";
+import { WaitlistButton, WaitlistPanel } from "@/components/waitlist";
 
 type Tab = "find-doctors" | "appointments" | "history";
 
@@ -531,9 +532,12 @@ function DoctorCard({ doctor, onBooked }: {
           </div>
         </div>
       ) : (
-        <p className="text-xs text-slate-400 bg-slate-50 rounded-lg p-3 text-center">
-          No available slots at the moment
-        </p>
+        <div className="space-y-2">
+          <p className="text-xs text-slate-400 bg-slate-50 rounded-lg p-3 text-center">
+            No available slots at the moment
+          </p>
+          <WaitlistButton doctorProfileId={doctor.id} doctorName={doctor.user?.fullName ?? "Doctor"} />
+        </div>
       )}
     </div>
   );
