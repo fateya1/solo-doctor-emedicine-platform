@@ -177,6 +177,33 @@ export class AppointmentsService {
     return updated;
   }
 
+  async scheduleFollowUp(
+    userId: string,
+    dto: { appointmentId: string; slotId: string; reason?: string },
+  ) {
+    // Verify the doctor owns the original appointment
+    const doctorProfile = await this.prisma.doctorProfile.findUnique({ where: { userId } });
+    if (!doctorProfile) throw new NotFoundException("Doctor profile not found");
+
+    const original = await this.prisma.appointment.findUnique({
+      where: { id: dto.appointmentId },
+      include: {
+        availabilitySlot: true,
+        patient: { include: { user: true } },
+      },
+    });
+    if (!original) throw new NotFoundException("Original appointment not found");
+    if (original.availabilitySlot.doctorId !== doctorProfile.id) {
+      throw new BadRequestException("Not authorized to schedule follow-up for this appointment");
+    }
+
+    // Book the follow-up slot
+    return this.bookSlot(original.patient.userId, {
+      slotId: dto.slotId,
+      reason: dto.reason ?? "Follow-up appointment",
+    });
+  }
+
   async cancelAppointment(appointmentId: string, userId: string, reason?: string) {
     const patientProfile = await this.prisma.patientProfile.findUnique({
       where: { userId },
@@ -191,6 +218,7 @@ export class AppointmentsService {
         patient: { include: { user: true } },
       },
     });
+
     if (!appointment) throw new NotFoundException("Appointment not found");
     if (appointment.patientId !== patientProfile.id) {
       throw new BadRequestException("Not authorized to cancel this appointment");
