@@ -17,8 +17,9 @@ import { IntakeFormModal } from "@/components/intake-form-modal";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useT } from "@/lib/i18n";
 import { WaitlistButton, WaitlistPanel } from "@/components/waitlist";
+import { InsurancePanel } from "@/components/insurance-panel";
 
-type Tab = "find-doctors" | "appointments" | "history";
+type Tab = "find-doctors" | "appointments" | "history" | "insurance";
 
 export default function PatientDashboard() {
   const { user, token, logout, _hasHydrated } = useAuthStore();
@@ -189,6 +190,7 @@ export default function PatientDashboard() {
             { key: "find-doctors" as Tab, label: t("nav", "findDoctors") },
             { key: "appointments" as Tab, label: t("nav", "myAppointments") },
             { key: "history" as Tab, label: t("nav", "medicalHistory") },
+            { key: "insurance" as Tab, label: "Insurance" },
           ]).map(({ key, label }) => (
             <button key={key} onClick={() => setTab(key)}
               className={`flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-medium transition-all touch-manipulation ${
@@ -378,6 +380,12 @@ export default function PatientDashboard() {
         )}
 
         {tab === "history" && <MedicalHistory />}
+
+        {tab === "insurance" && (
+          <div className="card">
+            <InsurancePanel />
+          </div>
+        )}
       </div>
 
       {intakeFormAppt && (
