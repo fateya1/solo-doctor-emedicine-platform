@@ -2,7 +2,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Clock, User, LogOut, Stethoscope, Loader2, Search, X, Menu, Phone, CheckCircle, Star } from "lucide-react";
+import {
+  Calendar, Clock, User, LogOut, Stethoscope, Loader2,
+  Search, X, Menu, Phone, CheckCircle, Star, ClipboardList
+} from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
@@ -10,6 +13,8 @@ import { VideoButton } from "@/components/video-button";
 import { PrescriptionDownload } from "@/components/prescription-download";
 import { ReviewModal } from "@/components/review-modal";
 import { MedicalHistory } from "@/components/medical-history";
+import { IntakeFormModal } from "@/components/intake-form-modal";
+
 type Tab = "find-doctors" | "appointments" | "history";
 
 export default function PatientDashboard() {
@@ -26,6 +31,9 @@ export default function PatientDashboard() {
   const [phoneInput, setPhoneInput] = useState("");
   const [phoneSaved, setPhoneSaved] = useState(false);
   const [reviewingAppt, setReviewingAppt] = useState<{ id: string; doctorName: string } | null>(null);
+  const [intakeFormAppt, setIntakeFormAppt] = useState<{
+    id: string; doctorName: string; date: string; existingForm?: any;
+  } | null>(null);
 
   useEffect(() => {
     if (_hasHydrated && !token) router.push("/auth/login");
@@ -81,6 +89,17 @@ export default function PatientDashboard() {
   if (!token) return null;
 
   const confirmedAppts = appointments?.filter((a: any) => a.status === "CONFIRMED").length ?? 0;
+
+  function openIntakeForm(appt: any) {
+    setIntakeFormAppt({
+      id: appt.id,
+      doctorName: appt.availabilitySlot?.doctor?.user?.fullName ?? "Doctor",
+      date: appt.availabilitySlot?.startTime
+        ? format(new Date(appt.availabilitySlot.startTime), "MMM d, yyyy · h:mm a")
+        : "",
+      existingForm: appt.intakeForm ?? undefined,
+    });
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -160,12 +179,11 @@ export default function PatientDashboard() {
         )}
 
         <div className="flex gap-1 bg-white border border-slate-100 rounded-xl p-1 mb-6 w-full sm:w-fit">
-          {[
+          {([
             { key: "find-doctors" as Tab, label: "Find Doctors" },
-            { key: "history" as Tab, label: "Medical History" },
             { key: "appointments" as Tab, label: "My Appointments" },
             { key: "history" as Tab, label: "Medical History" },
-          ].map(({ key, label }) => (
+          ]).map(({ key, label }) => (
             <button key={key} onClick={() => setTab(key)}
               className={`flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-medium transition-all touch-manipulation ${
                 tab === key ? "bg-brand-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
@@ -173,7 +191,6 @@ export default function PatientDashboard() {
               {label}
             </button>
           ))}
-          {tab === "history" && <MedicalHistory />}
         </div>
 
         {tab === "find-doctors" && (
@@ -192,8 +209,7 @@ export default function PatientDashboard() {
                     placeholder="Specialty (e.g. Cardiology)..." className="input pl-9 w-full" />
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => setSearchQuery({ name: searchName, specialty: searchSpecialty })}
+                  <button onClick={() => setSearchQuery({ name: searchName, specialty: searchSpecialty })}
                     className="btn-primary flex items-center gap-2 flex-1 sm:flex-none justify-center touch-manipulation">
                     <Search className="w-4 h-4" /> Search
                   </button>
@@ -219,10 +235,12 @@ export default function PatientDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                 {doctors.map((doc: any) => (
                   <DoctorCard key={doc.id} doctor={doc}
-                    onBooked={() => {
+                    onBooked={(apptId, doctorName, apptDate) => {
                       queryClient.invalidateQueries({ queryKey: ["my-appointments"] });
                       queryClient.invalidateQueries({ queryKey: ["doctor-search"] });
                       refetchAppointments();
+                      setTab("appointments");
+                      setIntakeFormAppt({ id: apptId, doctorName, date: apptDate });
                     }}
                   />
                 ))}
@@ -243,82 +261,133 @@ export default function PatientDashboard() {
               </div>
             ) : (
               <div className="space-y-3">
-                {appointments.map((appt: any) => (
-                  <div key={appt.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-slate-50 rounded-xl">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-800">
-                        Dr. {appt.availabilitySlot?.doctor?.user?.fullName ?? "Unknown"}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {appt.availabilitySlot?.startTime
-                          ? format(new Date(appt.availabilitySlot.startTime), "EEEE, MMM d yyyy h:mm a")
-                          : "N/A"}
-                      </p>
-                      <p className="text-xs text-slate-400">{appt.reason ?? "General consultation"}</p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                        appt.status === "CONFIRMED" ? "bg-green-50 text-green-700" :
-                        appt.status === "COMPLETED" ? "bg-blue-50 text-blue-700" :
-                        appt.status === "CANCELLED" ? "bg-red-50 text-red-600" :
-                        appt.status === "NO_SHOW" ? "bg-slate-100 text-slate-500" :
-                        "bg-amber-50 text-amber-700"
-                      }`}>{appt.status}</span>
-
-                      {appt.status === "COMPLETED" && appt.prescription && (
-                        <PrescriptionDownload appointmentId={appt.id} />
-                      )}
-                      {appt.status === "COMPLETED" && !appt.review && (
-                        <button
-                          onClick={() => setReviewingAppt({
-                            id: appt.id,
-                            doctorName: appt.availabilitySlot?.doctor?.user?.fullName ?? "Doctor",
-                          })}
-                          className="flex items-center gap-1 text-xs bg-amber-50 text-amber-700 hover:bg-amber-100 px-3 py-2 rounded-lg touch-manipulation"
-                        >
-                          <Star className="w-3 h-3" /> Rate
-                        </button>
-                      )}
-                      {appt.status === "COMPLETED" && appt.review && (
-                        <div className="flex items-center gap-1 text-xs text-slate-500">
-                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                          <span>{appt.review.rating}/5</span>
+                {appointments.map((appt: any) => {
+                  const hasForm = !!appt.intakeForm;
+                  const isConfirmed = appt.status === "CONFIRMED";
+                  return (
+                    <div key={appt.id} className="flex flex-col gap-3 p-4 bg-slate-50 rounded-xl">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">
+                            Dr. {appt.availabilitySlot?.doctor?.user?.fullName ?? "Unknown"}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {appt.availabilitySlot?.startTime
+                              ? format(new Date(appt.availabilitySlot.startTime), "EEEE, MMM d yyyy · h:mm a")
+                              : "N/A"}
+                          </p>
+                          <p className="text-xs text-slate-400">{appt.reason ?? "General consultation"}</p>
                         </div>
-                      )}
+                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full w-fit ${
+                          appt.status === "CONFIRMED" ? "bg-green-50 text-green-700" :
+                          appt.status === "COMPLETED" ? "bg-blue-50 text-blue-700" :
+                          appt.status === "CANCELLED" ? "bg-red-50 text-red-600" :
+                          appt.status === "NO_SHOW" ? "bg-slate-100 text-slate-500" :
+                          "bg-amber-50 text-amber-700"
+                        }`}>{appt.status}</span>
+                      </div>
 
-                      {appt.status === "CONFIRMED" && (
-                        cancellingId === appt.id ? (
-                          <div className="flex gap-1">
-                            <VideoButton appointmentId={appt.id} role="patient" />
-                            <button onClick={() => cancelMutation.mutate(appt.id)}
-                              disabled={cancelMutation.isPending}
-                              className="text-xs bg-red-600 text-white px-3 py-2 rounded-lg flex items-center gap-1 touch-manipulation">
-                              {cancelMutation.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
-                              Confirm cancel
-                            </button>
-                            <button onClick={() => setCancellingId(null)}
-                              className="text-xs bg-slate-100 text-slate-600 px-3 py-2 rounded-lg touch-manipulation">
-                              Keep
-                            </button>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {(isConfirmed || appt.status === "COMPLETED") && (
+                          <button
+                            onClick={() => openIntakeForm(appt)}
+                            className={`flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg touch-manipulation transition-colors ${
+                              hasForm
+                                ? "bg-brand-50 text-brand-700 hover:bg-brand-100"
+                                : "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
+                            }`}
+                          >
+                            <ClipboardList className="w-3 h-3" />
+                            {hasForm ? "Edit intake form" : "Fill intake form"}
+                            {!hasForm && isConfirmed && (
+                              <span className="bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-0.5">New</span>
+                            )}
+                          </button>
+                        )}
+
+                        {appt.status === "COMPLETED" && appt.prescription && (
+                          <PrescriptionDownload appointmentId={appt.id} />
+                        )}
+                        {appt.status === "COMPLETED" && !appt.review && (
+                          <button
+                            onClick={() => setReviewingAppt({
+                              id: appt.id,
+                              doctorName: appt.availabilitySlot?.doctor?.user?.fullName ?? "Doctor",
+                            })}
+                            className="flex items-center gap-1 text-xs bg-amber-50 text-amber-700 hover:bg-amber-100 px-3 py-2 rounded-lg touch-manipulation">
+                            <Star className="w-3 h-3" /> Rate
+                          </button>
+                        )}
+                        {appt.status === "COMPLETED" && appt.review && (
+                          <div className="flex items-center gap-1 text-xs text-slate-500">
+                            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                            <span>{appt.review.rating}/5</span>
                           </div>
-                        ) : (
-                          <div className="flex gap-1">
-                            <VideoButton appointmentId={appt.id} role="patient" />
-                            <button onClick={() => setCancellingId(appt.id)}
-                              className="text-xs bg-red-50 text-red-600 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors touch-manipulation">
-                              Cancel
-                            </button>
-                          </div>
-                        )
+                        )}
+                        {isConfirmed && (
+                          cancellingId === appt.id ? (
+                            <div className="flex gap-1">
+                              <VideoButton appointmentId={appt.id} role="patient" />
+                              <button onClick={() => cancelMutation.mutate(appt.id)}
+                                disabled={cancelMutation.isPending}
+                                className="text-xs bg-red-600 text-white px-3 py-2 rounded-lg flex items-center gap-1 touch-manipulation">
+                                {cancelMutation.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
+                                Confirm cancel
+                              </button>
+                              <button onClick={() => setCancellingId(null)}
+                                className="text-xs bg-slate-100 text-slate-600 px-3 py-2 rounded-lg touch-manipulation">
+                                Keep
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex gap-1">
+                              <VideoButton appointmentId={appt.id} role="patient" />
+                              <button onClick={() => setCancellingId(appt.id)}
+                                className="text-xs bg-red-50 text-red-600 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors touch-manipulation">
+                                Cancel
+                              </button>
+                            </div>
+                          )
+                        )}
+                      </div>
+
+                      {isConfirmed && !hasForm && (
+                        <p className="text-xs text-amber-600 flex items-center gap-1.5">
+                          <ClipboardList className="w-3 h-3" />
+                          Help your doctor prepare — fill in your intake form before the appointment
+                        </p>
+                      )}
+                      {isConfirmed && hasForm && (
+                        <p className="text-xs text-green-600 flex items-center gap-1.5">
+                          <CheckCircle className="w-3 h-3" />
+                          Intake form submitted · Last updated {format(new Date(appt.intakeForm.updatedAt), "MMM d")}
+                        </p>
                       )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
         )}
+
+        {tab === "history" && <MedicalHistory />}
       </div>
+
+      {intakeFormAppt && (
+        <IntakeFormModal
+          appointmentId={intakeFormAppt.id}
+          doctorName={intakeFormAppt.doctorName}
+          appointmentDate={intakeFormAppt.date}
+          existingForm={intakeFormAppt.existingForm}
+          profileAllergies={profile?.allergies ?? []}
+          onClose={() => setIntakeFormAppt(null)}
+          onSubmitted={() => {
+            queryClient.invalidateQueries({ queryKey: ["my-appointments"] });
+            setIntakeFormAppt(null);
+          }}
+        />
+      )}
 
       {reviewingAppt && (
         <ReviewModal
@@ -349,26 +418,16 @@ export default function PatientDashboard() {
               </div>
             ) : (
               <>
-                <input
-                  type="tel"
-                  value={phoneInput}
-                  onChange={(e) => setPhoneInput(e.target.value)}
-                  placeholder="+254712345678 or 0712345678"
-                  className="input w-full mb-4"
-                  autoFocus
-                />
+                <input type="tel" value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)}
+                  placeholder="+254712345678 or 0712345678" className="input w-full mb-4" autoFocus />
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => updatePhoneMutation.mutate(phoneInput)}
+                  <button onClick={() => updatePhoneMutation.mutate(phoneInput)}
                     disabled={!phoneInput || updatePhoneMutation.isPending}
-                    className="btn-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
+                    className="btn-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50">
                     {updatePhoneMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                     Save
                   </button>
-                  <button onClick={() => setShowPhoneModal(false)} className="btn-secondary px-4">
-                    Cancel
-                  </button>
+                  <button onClick={() => setShowPhoneModal(false)} className="btn-secondary px-4">Cancel</button>
                 </div>
               </>
             )}
@@ -379,7 +438,10 @@ export default function PatientDashboard() {
   );
 }
 
-function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void }) {
+function DoctorCard({ doctor, onBooked }: {
+  doctor: any;
+  onBooked: (apptId: string, doctorName: string, apptDate: string) => void;
+}) {
   const [bookingSlot, setBookingSlot] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const queryClient = useQueryClient();
@@ -387,11 +449,15 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
   const bookMutation = useMutation({
     mutationFn: (slotId: string) =>
       apiClient.post("/appointments/book", { slotId, reason: reason || undefined }),
-    onSuccess: () => {
+    onSuccess: (res, slotId) => {
+      const slot = doctor.availabilitySlots.find((s: any) => s.id === slotId);
+      const apptDate = slot?.startTime
+        ? format(new Date(slot.startTime), "MMM d, yyyy · h:mm a")
+        : "";
       setBookingSlot(null);
       setReason("");
       queryClient.invalidateQueries({ queryKey: ["doctor-search"] });
-      onBooked();
+      onBooked(res.data.id, doctor.user?.fullName ?? "Doctor", apptDate);
     },
     onError: (err: any) => alert(err.response?.data?.message || "Booking failed."),
   });
@@ -428,7 +494,7 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
                 {bookingSlot === slot.id ? (
                   <div className="bg-brand-50 border border-brand-100 rounded-xl p-3">
                     <p className="text-xs font-medium text-brand-800 mb-2">
-                      {format(new Date(slot.startTime), "MMM d h:mm a")}
+                      {format(new Date(slot.startTime), "MMM d · h:mm a")}
                     </p>
                     <input value={reason} onChange={(e) => setReason(e.target.value)}
                       placeholder="Reason for visit (optional)" className="input text-xs mb-2 w-full" />
@@ -439,8 +505,7 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
                         {bookMutation.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
                         Confirm booking
                       </button>
-                      <button onClick={() => setBookingSlot(null)}
-                        className="btn-secondary text-xs py-2.5 touch-manipulation">
+                      <button onClick={() => setBookingSlot(null)} className="btn-secondary text-xs py-2.5 touch-manipulation">
                         Cancel
                       </button>
                     </div>
@@ -448,7 +513,7 @@ function DoctorCard({ doctor, onBooked }: { doctor: any; onBooked: () => void })
                 ) : (
                   <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                     <p className="text-xs text-slate-700">
-                      {format(new Date(slot.startTime), "MMM d, yyyy h:mm a")}
+                      {format(new Date(slot.startTime), "MMM d, yyyy · h:mm a")}
                     </p>
                     <button onClick={() => setBookingSlot(slot.id)}
                       className="text-xs bg-brand-600 text-white px-3 py-2 rounded-lg hover:bg-brand-700 touch-manipulation">

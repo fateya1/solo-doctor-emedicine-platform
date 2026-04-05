@@ -54,7 +54,6 @@ export class AppointmentsService {
         timeStyle: "short",
       });
 
-      // Email notifications
       this.emailService.sendAppointmentConfirmation(
         patientProfile.user.email,
         patientProfile.user.fullName,
@@ -71,7 +70,6 @@ export class AppointmentsService {
         dto.reason,
       ).catch(() => {});
 
-      // SMS confirmation to patient if phone exists
       if (patientProfile.phone) {
         this.smsService.sendAppointmentConfirmationSms(
           patientProfile.phone,
@@ -82,7 +80,14 @@ export class AppointmentsService {
       }
 
       this.logger.log("Appointment booked: " + appointment.id);
-      this.auditService.log({ userId, action: "APPOINTMENT_BOOKED", entity: "Appointment", entityId: appointment.id, metadata: { slotId: dto.slotId, reason: dto.reason } }).catch(() => {});
+      this.auditService.log({
+        userId,
+        action: "APPOINTMENT_BOOKED",
+        entity: "Appointment",
+        entityId: appointment.id,
+        metadata: { slotId: dto.slotId, reason: dto.reason },
+      }).catch(() => {});
+
       return appointment;
     });
   }
@@ -97,6 +102,7 @@ export class AppointmentsService {
         availabilitySlot: { include: { doctor: { include: { user: true } } } },
         prescription: true,
         review: true,
+        intakeForm: { select: { id: true, createdAt: true, updatedAt: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -111,7 +117,12 @@ export class AppointmentsService {
       include: {
         availabilitySlot: true,
         prescription: true,
-        patient: { include: { user: { select: { fullName: true, email: true } } } },
+        intakeForm: true,
+        patient: {
+          include: {
+            user: { select: { fullName: true, email: true } },
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -147,7 +158,6 @@ export class AppointmentsService {
         data: { isAvailable: true },
       });
 
-      // SMS cancellation to patient
       const patientProfile = await this.prisma.patientProfile.findUnique({
         where: { id: appointment.patientId },
         include: { user: true },
@@ -208,7 +218,6 @@ export class AppointmentsService {
         dateStyle: "full", timeStyle: "short",
       });
 
-      // Email cancellations
       this.emailService.sendAppointmentCancellation(
         appointment.patient.user.email,
         appointment.patient.user.fullName,
@@ -223,7 +232,6 @@ export class AppointmentsService {
         appointment.availabilitySlot.startTime,
       ).catch(() => {});
 
-      // SMS cancellation to patient
       if (patientProfile.phone) {
         this.smsService.sendAppointmentCancellationSms(
           patientProfile.phone,
@@ -233,83 +241,6 @@ export class AppointmentsService {
       }
 
       return cancelled;
-    });
-  }
-  async scheduleFollowUp(userId: string, dto: { appointmentId: string; slotId: string; reason?: string }) {
-    const doctorProfile = await this.prisma.doctorProfile.findUnique({
-      where: { userId },
-      include: { user: true },
-    });
-    if (!doctorProfile) throw new NotFoundException("Doctor profile not found");
-
-    // Verify original appointment belongs to this doctor
-    const original = await this.prisma.appointment.findUnique({
-      where: { id: dto.appointmentId },
-      include: {
-        availabilitySlot: true,
-        patient: { include: { user: true } },
-      },
-    });
-    if (!original) throw new NotFoundException("Original appointment not found");
-    if (original.availabilitySlot.doctorId !== doctorProfile.id) {
-      throw new BadRequestException("Not authorized for this appointment");
-    }
-
-    // Book the follow-up slot
-    return this.prisma.$transaction(async (tx) => {
-      const slot = await tx.availabilitySlot.findUnique({
-        where: { id: dto.slotId },
-        include: { appointment: true },
-      });
-      if (!slot) throw new NotFoundException("Slot not found");
-      if (!slot.isAvailable || slot.appointment) {
-        throw new BadRequestException("Slot is no longer available");
-      }
-
-      const followUp = await tx.appointment.create({
-        data: {
-          patientId: original.patientId,
-          slotId: dto.slotId,
-          reason: dto.reason ?? "Follow-up appointment",
-          status: AppointmentStatus.CONFIRMED,
-        },
-      });
-
-      await tx.availabilitySlot.update({
-        where: { id: dto.slotId },
-        data: { isAvailable: false },
-      });
-
-      const dateStr = slot.startTime.toLocaleString("en-KE", { dateStyle: "full", timeStyle: "short" });
-
-      // Notify patient by email
-      this.emailService.sendFollowUpNotification(
-        original.patient.user.email,
-        original.patient.user.fullName,
-        doctorProfile.user.fullName,
-        slot.startTime,
-        dto.reason ?? "Follow-up appointment",
-      ).catch(() => {});
-
-      // SMS if phone exists
-      if (original.patient.phone) {
-        this.smsService.sendAppointmentConfirmationSms(
-          original.patient.phone,
-          original.patient.user.fullName,
-          doctorProfile.user.fullName,
-          dateStr,
-        ).catch(() => {});
-      }
-
-      this.auditService.log({
-        userId,
-        action: "APPOINTMENT_BOOKED" as any,
-        entity: "Appointment",
-        entityId: followUp.id,
-        metadata: { type: "follow_up", originalAppointmentId: dto.appointmentId },
-      }).catch(() => {});
-
-      return followUp;
     });
   }
 }

@@ -66,6 +66,8 @@ enum AuditAction {
   APPOINTMENT_BOOKED
   APPOINTMENT_CANCELLED
   APPOINTMENT_STATUS_UPDATED
+  INTAKE_FORM_SUBMITTED
+  INTAKE_FORM_UPDATED
   PRESCRIPTION_CREATED
   PRESCRIPTION_UPDATED
   CONSULTATION_NOTE_SAVED
@@ -153,6 +155,7 @@ model PatientProfile {
   reviews           Review[]
   prescriptions     Prescription[]
   consultationNotes ConsultationNote[]
+  intakeForms       IntakeForm[]
 
   @@map("patient_profiles")
 }
@@ -230,10 +233,34 @@ model Appointment {
   review           Review?
   prescription     Prescription?
   consultationNote ConsultationNote?
+  intakeForm       IntakeForm?
 
   @@index([patientId])
   @@index([slotId])
   @@map("appointments")
+}
+
+model IntakeForm {
+  id              String   @id @default(uuid())
+  appointmentId   String   @unique
+  patientId       String
+  symptoms        String[]
+  symptomNotes    String?
+  symptomDuration String?
+  allergies       String[]
+  allergyNotes    String?
+  medications     Json     @default("[]")
+  bloodPressure   String?
+  weight          String?
+  additionalNotes String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  appointment Appointment    @relation(fields: [appointmentId], references: [id])
+  patient     PatientProfile @relation(fields: [patientId], references: [id])
+
+  @@index([patientId])
+  @@map("intake_forms")
 }
 
 model Review {
@@ -298,17 +325,17 @@ model ConsultationNote {
 }
 
 model AuditLog {
-  id         String      @id @default(uuid())
-  userId     String?
-  action     AuditAction
-  entity     String?
-  entityId   String?
-  ipAddress  String?
-  userAgent  String?
-  metadata   Json?
-  success    Boolean     @default(true)
-  error      String?
-  createdAt  DateTime    @default(now())
+  id        String      @id @default(uuid())
+  userId    String?
+  action    AuditAction
+  entity    String?
+  entityId  String?
+  ipAddress String?
+  userAgent String?
+  metadata  Json?
+  success   Boolean     @default(true)
+  error     String?
+  createdAt DateTime    @default(now())
 
   user User? @relation(fields: [userId], references: [id])
 
