@@ -338,4 +338,24 @@ export class EmailService {
       `,
     });
   }
+  async sendWaitlistNotification(
+    to: string,
+    patientName: string,
+    doctorName: string,
+    doctorProfileId: string,
+  ): Promise<void> {
+    await this.send({
+      to,
+      subject: `A slot is now available with Dr. ${doctorName} - SoloDoc`,
+      html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;">
+          <h1 style="color:#0284c7;">Good news, ${patientName}!</h1>
+          <p>A slot has just become available with <strong>Dr. ${doctorName}</strong>.</p>
+          <p>Book now before it fills up — slots go fast!</p>
+          <a href="${process.env.FRONTEND_URL}/doctors/${doctorProfileId}" style="background:#0284c7;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:16px;">Book Now</a>
+          <p style="color:#64748b;margin-top:32px;font-size:14px;">You received this because you joined the waitlist for Dr. ${doctorName}. The SoloDoc Team</p>
+        </div>
+      `,
+    });
+  }
 }
