@@ -5,16 +5,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar, Users, Clock, LogOut, Stethoscope, Plus, Loader2,
   CheckCircle, XCircle, AlertCircle, CreditCard, TrendingUp,
-  BarChart2, ArrowUp, ArrowDown, Menu, X, ClipboardList, FileText, CalendarPlus
+  BarChart2, ArrowUp, ArrowDown, Menu, X, ClipboardList
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 import { AvailabilityTemplateManager } from "@/components/availability-template-manager";
-import { VideoButton } from "@/components/video-button";
-import { PrescriptionModal } from "@/components/prescription-modal";
-import { ConsultationNotesModal } from "@/components/consultation-notes-modal";
-import { FollowUpModal } from "@/components/follow-up-modal";
 
 type Tab = "appointments" | "slots" | "analytics" | "subscription";
 
@@ -26,12 +22,9 @@ export default function DoctorDashboard() {
   const [showAddSlot, setShowAddSlot] = useState(false);
   const [slotDate, setSlotDate] = useState("");
   const [slotTime, setSlotTime] = useState("09:00");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [slotDuration, setSlotDuration] = useState(60);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedIntakeId, setExpandedIntakeId] = useState<string | null>(null);
-  const [prescribingAppt, setPrescribingAppt] = useState<{ id: string; patientName: string; existing?: any } | null>(null);
-  const [followUpAppt, setFollowUpAppt] = useState<{ id: string; patientName: string } | null>(null);
-  const [notingAppt, setNotingAppt] = useState<{ id: string; patientName: string } | null>(null);
   const [slotView, setSlotView] = useState<"slots" | "templates">("slots");
 
   useEffect(() => {
@@ -83,7 +76,7 @@ export default function DoctorDashboard() {
       return apiClient.post(`/availability/slots?doctorId=${doctorProfileId}`, {
         from: start.toISOString(),
         to: end.toISOString(),
-        slotMinutes: 60,
+        slotMinutes: slotDuration,
         breakMinutes: 0,
       });
     },
@@ -280,34 +273,6 @@ export default function DoctorDashboard() {
                       {!appt.intakeForm && appt.status === "CONFIRMED" && (
                         <span className="text-xs text-slate-400 italic">No intake form yet</span>
                       )}
-                      {(appt.status === "CONFIRMED" || appt.status === "COMPLETED") && (
-                        <div className="flex gap-1">
-                          <VideoButton appointmentId={appt.id} role="doctor" />
-                          <button
-                            onClick={() => setPrescribingAppt({ id: appt.id, patientName: appt.patient?.user?.fullName ?? "Patient", existing: appt.prescription ?? undefined })}
-                            className="flex items-center gap-1 text-xs bg-teal-50 text-teal-700 hover:bg-teal-100 px-3 py-2 rounded-lg touch-manipulation"
-                          >
-                            <FileText className="w-3 h-3" />
-                            {appt.prescription ? "Edit Rx" : "Write Rx"}
-                          </button>
-                          <button
-                            onClick={() => setNotingAppt({ id: appt.id, patientName: appt.patient?.user?.fullName ?? "Patient" })}
-                            className="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 px-3 py-2 rounded-lg touch-manipulation"
-                          >
-                            <ClipboardList className="w-3 h-3" />
-                            {appt.consultationNote ? "Edit Notes" : "Add Notes"}
-                          </button>
-                        </div>
-                      )}
-                      {appt.status === "COMPLETED" && (
-                        <button
-                          onClick={() => setFollowUpAppt({ id: appt.id, patientName: appt.patient?.user?.fullName ?? "Patient" })}
-                          className="flex items-center gap-1 text-xs bg-purple-50 text-purple-700 hover:bg-purple-100 px-3 py-2 rounded-lg touch-manipulation"
-                        >
-                          <CalendarPlus className="w-3 h-3" />
-                          Schedule Follow-up
-                        </button>
-                      )}
                       {appt.status === "CONFIRMED" && (
                         <div className="flex gap-1">
                           <button onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "COMPLETED" })}
@@ -373,23 +338,14 @@ export default function DoctorDashboard() {
                     <div className="flex flex-col sm:flex-row gap-3">
                       <input type="date" value={slotDate} onChange={(e) => setSlotDate(e.target.value)}
                         className="input flex-1" min={new Date().toISOString().split("T")[0]} />
-                  <select value={slotTime} onChange={(e) => setSlotTime(e.target.value)} className="input sm:w-44">
-                    {Array.from({ length: 48 }, (_, i) => {
-                      const h = Math.floor(i / 2);
-                      const m = i % 2 === 0 ? "00" : "30";
-                      const val = `${String(h).padStart(2, "0")}:${m}`;
-                      const period = h < 12 ? "AM" : "PM";
-                      const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-                      const label = `${String(h12).padStart(2, "0")}:${m} ${period}`;
-                      return <option key={val} value={val}>{label}</option>;
-                    })}
-                  </select>
-                  <select value={slotDuration} onChange={(e) => setSlotDuration(Number(e.target.value))} className="input sm:w-36">
-                    <option value={30}>30 min</option>
-                    <option value={60}>60 min</option>
-                    <option value={90}>90 min</option>
-                    <option value={120}>2 hours</option>
-                  </select>
+                      <input type="time" value={slotTime} onChange={(e) => setSlotTime(e.target.value)}
+                        className="input sm:w-36" />
+                      <select value={slotDuration} onChange={(e) => setSlotDuration(Number(e.target.value))}
+                        className="input sm:w-32">
+                        {[15, 20, 30, 45, 60, 90, 120].map((d) => (
+                          <option key={d} value={d}>{d} min</option>
+                        ))}
+                      </select>
                       <button onClick={() => addSlotMutation.mutate()}
                         disabled={!slotDate || addSlotMutation.isPending}
                         className="btn-primary flex items-center justify-center gap-1.5 touch-manipulation">
@@ -664,28 +620,6 @@ export default function DoctorDashboard() {
       </div>
     </div>
   );
-      {followUpAppt && (
-        <FollowUpModal
-          appointmentId={followUpAppt!.id}
-          patientName={followUpAppt!.patientName}
-          onClose={() => setFollowUpAppt(null)}
-        />
-      )}
-      {prescribingAppt && (
-        <PrescriptionModal
-          appointmentId={prescribingAppt!.id}
-          patientName={prescribingAppt!.patientName}
-          existingPrescription={prescribingAppt!.existing}
-          onClose={() => setPrescribingAppt(null)}
-        />
-      )}
-      {notingAppt && (
-        <ConsultationNotesModal
-          appointmentId={notingAppt!.id}
-          patientName={notingAppt!.patientName}
-          onClose={() => setNotingAppt(null)}
-        />
-      )}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
