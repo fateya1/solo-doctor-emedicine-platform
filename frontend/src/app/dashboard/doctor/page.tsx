@@ -18,7 +18,7 @@ import { ConsultationNotesModal } from "@/components/consultation-notes-modal";
 import { FollowUpModal } from "@/components/follow-up-modal";
 import { VideoButton } from "@/components/video-button";
 
-type Tab = "appointments" | "slots" | "analytics" | "subscription" | "messages";
+type Tab = "appointments" | "slots" | "analytics" | "subscription";
 
 export default function DoctorDashboard() {
   const { user, token, logout, _hasHydrated } = useAuthStore();
@@ -134,7 +134,6 @@ export default function DoctorDashboard() {
     { key: "slots", label: t("nav", "availability") },
     { key: "analytics", label: t("nav", "analytics") },
     { key: "subscription", label: t("nav", "subscription") },
-    { key: "messages", label: "Messages" },
   ];
 
   const maxBar = analytics?.monthlyTrend
@@ -272,7 +271,7 @@ export default function DoctorDashboard() {
                         appt.status === "CANCELLED" ? "bg-red-50 text-red-600" :
                         appt.status === "NO_SHOW" ? "bg-slate-100 text-slate-500" :
                         "bg-amber-50 text-amber-700"
-                      }`}>{ {"CONFIRMED": t("appointment","status.CONFIRMED" as any)||"Confirmed","COMPLETED":t("appointment","status.COMPLETED" as any)||"Completed","CANCELLED":t("appointment","status.CANCELLED" as any)||"Cancelled","NO_SHOW":t("appointment","status.NO_SHOW" as any)||"No Show","PENDING":t("appointment","status.PENDING" as any)||"Pending"}[appt.status] || appt.status}</span>
+                      }`}>{t("appointment", `status${appt.status}` as any) || appt.status}</span>
                       {/* Intake form toggle */}
                       {appt.intakeForm && (
                         <button
@@ -330,25 +329,17 @@ export default function DoctorDashboard() {
                           📅 Follow-up
                         </button>
                       )}
-                      {/* Message button */}
-                      {(appt.status === "CONFIRMED" || appt.status === "COMPLETED") && appt.patientId && (
-                        <StartChatButton
-                          otherProfileId={appt.patientId}
-                          role="DOCTOR"
-                          label="Message"
-                        />
-                      )}
                       {/* Video + status buttons for CONFIRMED */}
                       {appt.status === "CONFIRMED" && (
                         <div className="flex gap-1">
                           <VideoButton appointmentId={appt.id} role="doctor" />
                           <button onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "COMPLETED" })}
-                            disabled={updateStatusMutation.isPending} title=t("doctor", "markCompleted")
+                            disabled={updateStatusMutation.isPending} title={t("doctor", "markCompleted")}
                             className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 touch-manipulation">
                             <CheckCircle className="w-4 h-4" />
                           </button>
                           <button onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "NO_SHOW" })}
-                            disabled={updateStatusMutation.isPending} title=t("doctor", "markNoShow")
+                            disabled={updateStatusMutation.isPending} title={t("doctor", "markNoShow")}
                             className="w-8 h-8 flex items-center justify-center bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 touch-manipulation">
                             <AlertCircle className="w-4 h-4" />
                           </button>
