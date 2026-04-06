@@ -557,15 +557,15 @@ export default function AdminDashboard() {
                     <tbody className="divide-y divide-slate-50">
                       {doctorEarnings.map((d: any) => (
                         <tr key={d.doctorProfileId} className="hover:bg-slate-50">
-                          <td className="py-3 font-medium text-slate-800">{d.doctorName}</td>
-                          <td className="py-3 text-right text-slate-600">{d.completedAppointments}</td>
-                          <td className="py-3 text-right text-slate-600">{Number(d.grossRevenue).toLocaleString()}</td>
-                          <td className="py-3 text-right text-purple-600">{Number(d.platformCommission).toLocaleString()}</td>
-                          <td className="py-3 text-right text-green-600 font-medium">{Number(d.netEarnings).toLocaleString()}</td>
-                          <td className="py-3 text-right text-blue-600">{Number(d.totalPaidOut ?? 0).toLocaleString()}</td>
-                          <td className="py-3 text-right text-amber-600 font-medium">{Number(d.pendingPayout ?? 0).toLocaleString()}</td>
+                          <td className="py-3 font-medium text-slate-800">{d.fullName}</td>
+                          <td className="py-3 text-right text-slate-600">{d.totalAppointments}</td>
+                          <td className="py-3 text-right text-slate-600">{Number(d.totalEarnings).toLocaleString()}</td>
+                          <td className="py-3 text-right text-purple-600">{Number(d.totalCommissionsPaid).toLocaleString()}</td>
+                          <td className="py-3 text-right text-green-600 font-medium">{Number(d.totalEarnings - d.totalCommissionsPaid).toLocaleString()}</td>
+                          <td className="py-3 text-right text-blue-600">{Number(d.lastPayoutAmount ?? 0).toLocaleString()}</td>
+                          <td className="py-3 text-right text-amber-600 font-medium">{Number(d.pendingPayoutAmount ?? 0).toLocaleString()}</td>
                           <td className="py-3 text-right">
-                            <button onClick={() => setPayoutModal({ doctorProfileId: d.doctorProfileId, doctorName: d.doctorName })}
+                            <button onClick={() => setPayoutModal({ doctorProfileId: d.doctorProfileId, doctorName: d.fullName })}
                               className="text-xs bg-brand-50 text-brand-700 hover:bg-brand-100 px-3 py-1.5 rounded-lg font-medium touch-manipulation">
                               Pay out
                             </button>
