@@ -17,8 +17,10 @@ import { PrescriptionModal } from "@/components/prescription-modal";
 import { ConsultationNotesModal } from "@/components/consultation-notes-modal";
 import { FollowUpModal } from "@/components/follow-up-modal";
 import { VideoButton } from "@/components/video-button";
+import { ChatPanel } from "@/components/chat";
+import { MessageSquare } from "lucide-react";
 
-type Tab = "appointments" | "slots" | "analytics" | "subscription";
+type Tab = "appointments" | "slots" | "analytics" | "subscription" | "messages";
 
 export default function DoctorDashboard() {
   const { user, token, logout, _hasHydrated } = useAuthStore();
@@ -134,6 +136,7 @@ export default function DoctorDashboard() {
     { key: "slots", label: t("nav", "availability") },
     { key: "analytics", label: t("nav", "analytics") },
     { key: "subscription", label: t("nav", "subscription") },
+    { key: "messages", label: "Messages" },
   ];
 
   const maxBar = analytics?.monthlyTrend
@@ -676,6 +679,16 @@ export default function DoctorDashboard() {
           </div>
         )}
       </div>
+
+      {/* Messages Tab */}
+      {tab === "messages" && (
+        <div className="card">
+          <h2 className="font-semibold text-slate-900 mb-5 flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-brand-600" /> Patient Messages
+          </h2>
+          <ChatPanel role="DOCTOR" />
+        </div>
+      )}
 
       {/* Modals */}
       {prescriptionAppt && (

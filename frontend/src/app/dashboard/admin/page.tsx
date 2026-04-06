@@ -173,6 +173,7 @@ export default function AdminDashboard() {
     { key: "appointments", label: "Appointments", icon: Calendar },
     { key: "subscriptions", label: "Subscriptions", icon: CreditCard },
     { key: "audit-logs", label: "Audit Logs", icon: FileText },
+    { key: "revenue", label: "Revenue", icon: DollarSign },
   ];
 
   const statusColor: Record<string, string> = {
