@@ -606,6 +606,16 @@ export default function DoctorDashboard() {
           </div>
         )}
 
+        {/* Messages Tab */}
+        {tab === "messages" && (
+          <div className="card">
+            <h2 className="font-semibold text-slate-900 mb-5 flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-brand-600" /> Patient Messages
+            </h2>
+            <ChatPanel role="DOCTOR" />
+          </div>
+        )}
+
         {/* Subscription Tab */}
         {tab === "subscription" && (
           <div className="card">
@@ -829,5 +839,6 @@ function IntakeFormView({ form }: { form: any }) {
     </div>
   );
 }
+
 
 
