@@ -22,6 +22,10 @@ export default function AdminDashboard() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // â”€â”€ Audit log filters â”€â”€
+  const [payoutModal, setPayoutModal] = useState<{ doctorProfileId: string; doctorName: string } | null>(null);
+  const [payoutAmount, setPayoutAmount] = useState("");
+  const [payoutPhone, setPayoutPhone] = useState("");
+  const [payoutNotes, setPayoutNotes] = useState("");
   const [auditSearch, setAuditSearch] = useState("");
   const [auditRole, setAuditRole] = useState("");
   const [auditCategory, setAuditCategory] = useState("");

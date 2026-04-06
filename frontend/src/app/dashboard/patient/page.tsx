@@ -13,13 +13,14 @@ import { VideoButton } from "@/components/video-button";
 import { PrescriptionDownload } from "@/components/prescription-download";
 import { ReviewModal } from "@/components/review-modal";
 import { MedicalHistory } from "@/components/medical-history";
+import { ChatPanel } from "@/components/chat";
 import { IntakeFormModal } from "@/components/intake-form-modal";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useT } from "@/lib/i18n";
 import { WaitlistButton, WaitlistPanel } from "@/components/waitlist";
 import { InsurancePanel } from "@/components/insurance-panel";
 
-type Tab = "find-doctors" | "appointments" | "history" | "insurance";
+type Tab = "find-doctors" | "appointments" | "history" | "insurance" | "messages";
 
 export default function PatientDashboard() {
   const { user, token, logout, _hasHydrated } = useAuthStore();
@@ -190,6 +191,7 @@ export default function PatientDashboard() {
             { key: "find-doctors" as Tab, label: t("nav", "findDoctors") },
             { key: "appointments" as Tab, label: t("nav", "myAppointments") },
             { key: "history" as Tab, label: t("nav", "medicalHistory") },
+            { key: "messages" as Tab, label: t("nav", "messages") },
             { key: "insurance" as Tab, label: "Insurance" },
           ]).map(({ key, label }) => (
             <button key={key} onClick={() => setTab(key)}
@@ -380,6 +382,7 @@ export default function PatientDashboard() {
         )}
 
         {tab === "history" && <MedicalHistory />}
+        {tab === "messages" && <ChatPanel role={"PATIENT"} />}
 
         {tab === "insurance" && (
           <div className="card">
@@ -456,6 +459,7 @@ function DoctorCard({ doctor, onBooked }: {
   doctor: any;
   onBooked: (apptId: string, doctorName: string, apptDate: string) => void;
 }) {
+  const t = useT();
   const [bookingSlot, setBookingSlot] = useState<string | null>(null);
   const [reason, setReason] = useState("");
   const queryClient = useQueryClient();
