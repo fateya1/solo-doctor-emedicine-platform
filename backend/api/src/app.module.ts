@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { APP_GUARD, APP_FILTER } from "@nestjs/core";
+import { SentryExceptionFilter } from "./common/filters/sentry-exception.filter";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { PrismaModule } from "./prisma/prisma.module";
 import { AuthModule } from "./auth/auth.module";
@@ -56,6 +57,7 @@ import { ThrottlerExceptionFilter } from "./common/filters/throttler-exception.f
     MessagingModule,
   ],
   providers: [
+    { provide: APP_FILTER, useClass: SentryExceptionFilter },
     {
       provide: APP_GUARD,
       useClass: AppThrottlerGuard,
@@ -67,3 +69,4 @@ import { ThrottlerExceptionFilter } from "./common/filters/throttler-exception.f
   ],
 })
 export class AppModule {}
+

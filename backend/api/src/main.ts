@@ -1,3 +1,4 @@
+import "./instrument";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { ValidationPipe, VersioningType } from "@nestjs/common";
@@ -59,5 +60,6 @@ async function bootstrap() {
 }
 
 bootstrap();
+
 
 
