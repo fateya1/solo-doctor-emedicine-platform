@@ -27,3 +27,22 @@ node_modules/
 backend/node_modules/
 backend/dist/
 dist/
+
+# Build output
+dist/
+build/
+*.js.map
+backend/api/src/**/*.js
+backend/src/**/*.js
+backend/api/generated/
+*.tsbuildinfo
+
+# Prisma generated
+backend/api/generated/
+
+# Fix scripts (move to a /scripts folder if you want to keep them)
+fix_*.py
+frontend/fix_*.py
+frontend/find_*.py
+backend/fix_*.py
+backend/inspect*.py
