@@ -113,6 +113,12 @@ export default function AdminDashboard() {
     onError: (err: any) => alert(err.response?.data?.message || "Failed to update payout."),
   });
 
+  const resendStkMutation = useMutation({
+    mutationFn: (id: string) => apiClient.post(`/revenue/payouts/${id}/resend-stk`),
+    onSuccess: (res: any) => alert(res.data?.message ?? "STK Push sent!"),
+    onError: (err: any) => alert(err.response?.data?.message || "Failed to resend STK Push."),
+  });
+
   const { data: subscriptions } = useQuery({
     queryKey: ["admin-subscriptions"],
     queryFn: () => apiClient.get("/admin/subscriptions").then((r) => r.data),
@@ -602,7 +608,12 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-2">
                         <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${p.status === "COMPLETED" ? "bg-green-50 text-green-700" : p.status === "FAILED" ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-700"}`}>{p.status}</span>
                         {p.status === "PENDING" && (
-                          <div className="flex gap-1">
+                          <div className="flex gap-1 flex-wrap">
+                            <button onClick={() => resendStkMutation.mutate(p.id)}
+                              disabled={resendStkMutation.isPending}
+                              className="text-xs bg-brand-50 text-brand-700 hover:bg-brand-100 px-2.5 py-1 rounded-lg touch-manipulation font-medium">
+                              📲 Resend STK
+                            </button>
                             <button onClick={() => { const r = prompt("M-Pesa receipt:"); if (r) updatePayoutMutation.mutate({ id: p.id, status: "COMPLETED", mpesaReceiptNo: r }); }}
                               className="text-xs bg-green-50 text-green-700 hover:bg-green-100 px-2.5 py-1 rounded-lg touch-manipulation">Mark paid</button>
                             <button onClick={() => updatePayoutMutation.mutate({ id: p.id, status: "FAILED" })}

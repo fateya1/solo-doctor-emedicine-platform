@@ -47,6 +47,10 @@ export class RevenueController {
     return this.service.updatePayoutStatus(id, body.status, body.mpesaReceiptNo);
   }
 
+  @Post("payouts/:id/resend-stk")
+  resendStkPush(@Param("id") id: string) {
+    return this.service.resendStkPush(id);
+  }
   @Post("commissions/:appointmentId/record")
   recordCommission(@Param("appointmentId") appointmentId: string) {
     return this.service.recordCommission(appointmentId);
