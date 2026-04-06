@@ -1,7 +1,7 @@
-﻿import axios from "axios";
+import axios from "axios";
 import { useAuthStore } from "@/store/auth";
 
-const BASE_URL = "https://solo-doctor-emedicine-platform.onrender.com/api";
+const BASE_URL = "https://solo-doctor-emedicine-platform.onrender.com/api/v1";
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -26,3 +26,4 @@ apiClient.interceptors.response.use(
     return Promise.reject(err);
   },
 );
+
