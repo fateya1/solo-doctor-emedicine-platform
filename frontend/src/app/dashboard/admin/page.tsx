@@ -518,10 +518,10 @@ export default function AdminDashboard() {
             {revenueSummary && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                 {[
-                  { label: "Total Revenue", value: `KES ${Number(revenueSummary.totalRevenue ?? 0).toLocaleString()}`, color: "bg-green-50 text-green-600", icon: TrendingUp },
-                  { label: "This Month", value: `KES ${Number(revenueSummary.revenueThisMonth ?? 0).toLocaleString()}`, color: "bg-brand-50 text-brand-600", icon: Activity },
-                  { label: "Platform Commission", value: `KES ${Number(revenueSummary.platformCommission ?? 0).toLocaleString()}`, color: "bg-purple-50 text-purple-600", icon: Banknote },
-                  { label: "Total Payouts", value: `KES ${Number(revenueSummary.totalPayouts ?? 0).toLocaleString()}`, color: "bg-blue-50 text-blue-600", icon: CreditCard },
+                  { label: "Total Revenue", value: `KES ${Number(revenueSummary.totalPlatformRevenue ?? 0).toLocaleString()}`, color: "bg-green-50 text-green-600", icon: TrendingUp },
+                  { label: "This Month", value: `KES ${Number(revenueSummary.thisMonthCommissions ?? 0).toLocaleString()}`, color: "bg-brand-50 text-brand-600", icon: Activity },
+                  { label: "Platform Commission", value: `KES ${Number(revenueSummary.totalCommissionRevenue ?? 0).toLocaleString()}`, color: "bg-purple-50 text-purple-600", icon: Banknote },
+                  { label: "Total Payouts", value: `KES ${Number(revenueSummary.completedPayouts?.amount ?? 0).toLocaleString()}`, color: "bg-blue-50 text-blue-600", icon: CreditCard },
                 ].map(({ label, value, color, icon: Icon }) => (
                   <div key={label} className="card">
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${color}`}>
@@ -562,7 +562,7 @@ export default function AdminDashboard() {
                           <td className="py-3 text-right text-slate-600">{Number(d.totalEarnings).toLocaleString()}</td>
                           <td className="py-3 text-right text-purple-600">{Number(d.totalCommissionsPaid).toLocaleString()}</td>
                           <td className="py-3 text-right text-green-600 font-medium">{Number(d.totalEarnings - d.totalCommissionsPaid).toLocaleString()}</td>
-                          <td className="py-3 text-right text-blue-600">{Number(d.lastPayoutAmount ?? 0).toLocaleString()}</td>
+                          <td className="py-3 text-right text-blue-600">{Number(d.totalPaidOut ?? 0).toLocaleString()}</td>
                           <td className="py-3 text-right text-amber-600 font-medium">{Number(d.pendingPayoutAmount ?? 0).toLocaleString()}</td>
                           <td className="py-3 text-right">
                             <button onClick={() => setPayoutModal({ doctorProfileId: d.doctorProfileId, doctorName: d.fullName })}
