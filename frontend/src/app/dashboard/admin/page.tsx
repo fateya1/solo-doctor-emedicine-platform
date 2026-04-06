@@ -565,10 +565,17 @@ export default function AdminDashboard() {
                           <td className="py-3 text-right text-blue-600">{Number(d.totalPaidOut ?? 0).toLocaleString()}</td>
                           <td className="py-3 text-right text-amber-600 font-medium">{Number(d.pendingPayoutAmount ?? 0).toLocaleString()}</td>
                           <td className="py-3 text-right">
-                            <button onClick={() => setPayoutModal({ doctorProfileId: d.doctorProfileId, doctorName: d.fullName })}
-                              className="text-xs bg-brand-50 text-brand-700 hover:bg-brand-100 px-3 py-1.5 rounded-lg font-medium touch-manipulation">
-                              Pay out
-                            </button>
+                            <div className="flex gap-1 justify-end">
+                              <button onClick={() => setPayoutModal({ doctorProfileId: d.doctorProfileId, doctorName: d.fullName })}
+                                className="text-xs bg-brand-50 text-brand-700 hover:bg-brand-100 px-3 py-1.5 rounded-lg font-medium touch-manipulation">
+                                Pay out
+                              </button>
+                              <button onClick={() => toggleUserMutation.mutate(d.userId)}
+                                disabled={toggleUserMutation.isPending}
+                                className={`text-xs px-3 py-1.5 rounded-lg font-medium touch-manipulation ${d.isActive ? "bg-red-50 text-red-600 hover:bg-red-100" : "bg-green-50 text-green-700 hover:bg-green-100"}`}>
+                                {d.isActive ? "Suspend" : "Activate"}
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
