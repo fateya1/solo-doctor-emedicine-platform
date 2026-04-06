@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { PayoutStatus } from "@prisma/client";
+import { AppointmentStatus, PayoutStatus } from "@prisma/client";
 
 const PLATFORM_COMMISSION_RATE = 0.15; // 15% platform commission
 
