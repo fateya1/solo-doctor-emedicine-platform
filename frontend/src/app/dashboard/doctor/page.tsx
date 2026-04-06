@@ -17,7 +17,7 @@ import { PrescriptionModal } from "@/components/prescription-modal";
 import { ConsultationNotesModal } from "@/components/consultation-notes-modal";
 import { FollowUpModal } from "@/components/follow-up-modal";
 import { VideoButton } from "@/components/video-button";
-import { ChatPanel } from "@/components/chat";
+import { ChatPanel, StartChatButton } from "@/components/chat";
 import { MessageSquare } from "lucide-react";
 
 type Tab = "appointments" | "slots" | "analytics" | "subscription" | "messages";
@@ -336,6 +336,7 @@ export default function DoctorDashboard() {
                       {appt.status === "CONFIRMED" && (
                         <div className="flex gap-1">
                           <VideoButton appointmentId={appt.id} role="doctor" />
+                          <StartChatButton otherProfileId={appt.patient?.id} role="DOCTOR" label="Message" />
                           <button onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "COMPLETED" })}
                             disabled={updateStatusMutation.isPending} title={t("doctor", "markCompleted")}
                             className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 touch-manipulation">
@@ -828,4 +829,5 @@ function IntakeFormView({ form }: { form: any }) {
     </div>
   );
 }
+
 
