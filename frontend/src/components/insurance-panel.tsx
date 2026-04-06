@@ -44,7 +44,7 @@ interface InsuranceClaim {
 
 // ── Kenya insurance providers ────────────────────────────────────────────────
 const KE_PROVIDERS = [
-  "NHIF", "Jubilee Health Insurance", "AAR Insurance", "Britam Health",
+  "SHA (Social Health Authority)", "Jubilee Health Insurance", "AAR Insurance", "Britam Health",
   "CIC Insurance", "Madison Insurance", "Resolution Insurance",
   "UAP Old Mutual", "Kenindia Assurance", "APA Insurance", "Other",
 ];
@@ -137,7 +137,7 @@ export function InsurancePanel() {
             <div className="text-center py-12 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
               <CreditCard className="w-8 h-8 text-slate-300 mx-auto mb-3" />
               <p className="text-slate-500 font-medium text-sm">No insurance cards yet</p>
-              <p className="text-slate-400 text-xs mt-1 mb-4">Add your NHIF or private insurance card to submit claims</p>
+              <p className="text-slate-400 text-xs mt-1 mb-4">Add your SHA or private insurance card to submit claims</p>
               <button onClick={() => setShowAddCard(true)} className="btn-primary text-sm touch-manipulation">
                 Add first card
               </button>
