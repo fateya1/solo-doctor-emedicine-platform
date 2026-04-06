@@ -9,14 +9,13 @@ export class CachingService {
     this.client = redis.createClient();
   }
 
-  // Example caching function for doctor's available slots
   async cacheAvailableSlots(doctorId: string, slots: any) {
-    this.client.setex(slots:, 3600, JSON.stringify(slots)); // Cache for 1 hour
+    this.client.setex(`doctor:${doctorId}:slots`, 3600, JSON.stringify(slots));
   }
 
   async getCachedSlots(doctorId: string) {
     return new Promise((resolve, reject) => {
-      this.client.get(slots:, (err, data) => {
+      this.client.get(`doctor:${doctorId}:slots`, (err, data) => {
         if (err) reject(err);
         resolve(JSON.parse(data));
       });

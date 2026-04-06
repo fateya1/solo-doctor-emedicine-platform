@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
+import { APP_GUARD, APP_FILTER } from "@nestjs/core";
+import { ThrottlerModule } from "@nestjs/throttler";
 import { PrismaModule } from "./prisma/prisma.module";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
@@ -20,11 +22,16 @@ import { MedicalRecordsModule } from "./medical-records/medical-records.module";
 import { AuditModule } from "./audit/audit.module";
 import { IntakeFormsModule } from "./intake-forms/intake-forms.module";
 import { InsuranceModule } from "./insurance/insurance.module";
+import { ReferralModule } from "./referral/referral.module";
+import { throttlerConfig } from "./config/throttler.config";
+import { AppThrottlerGuard } from "./common/guards/throttler.guard";
+import { ThrottlerExceptionFilter } from "./common/filters/throttler-exception.filter";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot(throttlerConfig),
     PrismaModule,
     EmailModule,
     AuditModule,
@@ -44,6 +51,17 @@ import { InsuranceModule } from "./insurance/insurance.module";
     MedicalRecordsModule,
     IntakeFormsModule,
     InsuranceModule,
+    ReferralModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: AppThrottlerGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: ThrottlerExceptionFilter,
+    },
   ],
 })
 export class AppModule {}

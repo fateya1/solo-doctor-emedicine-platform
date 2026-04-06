@@ -1,13 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import * as rateLimit from 'express-rate-limit';
 
+/**
+ * Rate limiting is handled globally by @nestjs/throttler (AppThrottlerGuard).
+ * Use @AuthThrottle(), @MpesaThrottle(), @StrictThrottle() decorators on controllers.
+ * This service is kept as a placeholder for any custom logic.
+ */
 @Injectable()
-export class RateLimitingService {
-  createRateLimiter() {
-    return rateLimit({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 100, // Limit each IP to 100 requests per windowMs
-      message: 'Too many requests from this IP, please try again later.',
-    });
-  }
-}
+export class RateLimitingService {}

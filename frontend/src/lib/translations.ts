@@ -92,6 +92,7 @@ export const translations = {
       patients: "Patients",
       subscriptions: "Subscriptions",
       auditLogs: "Audit Logs",
+      messages: "Messages",
     },
     patient: {
       hi: "Hi",
@@ -354,6 +355,7 @@ export const translations = {
       patients: "Wagonjwa",
       subscriptions: "Usajili",
       auditLogs: "Kumbukumbu",
+      messages: "Ujumbe",
     },
     patient: {
       hi: "Habari",
@@ -616,6 +618,7 @@ export const translations = {
       patients: "Patients",
       subscriptions: "Abonnements",
       auditLogs: "Journaux d'audit",
+      messages: "Messages",
     },
     patient: {
       hi: "Bonjour",

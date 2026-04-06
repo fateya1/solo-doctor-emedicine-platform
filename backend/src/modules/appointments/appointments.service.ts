@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { BookSlotDto } from './dto/book-slot.dto';
 import { AppointmentStatus } from '@prisma/client';
 
@@ -29,7 +29,7 @@ export class AppointmentsService {
         },
       });
 
-      // No slot update needed — the unique slotId on Appointment prevents double booking
+      // No slot update needed â€” the unique slotId on Appointment prevents double booking
       return appt;
     });
   }

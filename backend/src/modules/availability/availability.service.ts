@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { CreateSlotsDto } from './dto/create-slots.dto';
 
 @Injectable()
@@ -53,7 +53,7 @@ export class AvailabilityService {
       },
       orderBy: { startTime: 'asc' },
       include: {
-        appointment: true, // ✅ matches schema
+        appointment: true, // âœ… matches schema
       },
     });
   }
@@ -61,7 +61,7 @@ export class AvailabilityService {
   async deleteSlot(doctorId: string, slotId: string) {
     const slot = await this.prisma.availabilitySlot.findFirst({
       where: { id: slotId, doctorId },
-      include: { appointment: true }, // ✅ so we can check booked status
+      include: { appointment: true }, // âœ… so we can check booked status
     });
 
     if (!slot) throw new BadRequestException('Slot not found');

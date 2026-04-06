@@ -165,6 +165,8 @@ model DoctorProfile {
   payouts               DoctorPayout[]
   commissions           PlatformCommission[]   @relation("DoctorCommissions")
   conversations         Conversation[]
+  referralsGiven        Referral[]             @relation("ReferringDoctor")
+  referralsReceived     Referral[]             @relation("SpecialistReferrals")
 
   @@map("doctor_profiles")
 }
@@ -192,6 +194,7 @@ model PatientProfile {
   conversations     Conversation[]
   insuranceCards    InsuranceCard[]
   insuranceClaims   InsuranceClaim[]
+  referrals         Referral[]
 
   @@map("patient_profiles")
 }
@@ -272,6 +275,7 @@ model Appointment {
   intakeForm       IntakeForm?
   commission       PlatformCommission? @relation("AppointmentCommission")
   insuranceClaim   InsuranceClaim?     @relation("AppointmentInsuranceClaim")
+  referral         Referral?
 
   @@index([patientId])
   @@index([slotId])
@@ -559,4 +563,54 @@ model AuditLog {
   @@index([action])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+
+enum ReferralStatus {
+  REQUESTED
+  PENDING
+  ACCEPTED
+  BOOKED
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+enum ReferralUrgency {
+  ROUTINE
+  URGENT
+  EMERGENCY
+}
+
+model Referral {
+  id                 String          @id @default(cuid())
+  referralCode       String          @unique
+  status             ReferralStatus  @default(PENDING)
+  urgency            ReferralUrgency @default(ROUTINE)
+
+  referringDoctorId  String
+  referringDoctor    DoctorProfile   @relation("ReferringDoctor", fields: [referringDoctorId], references: [id])
+
+  patientId          String
+  patient            PatientProfile  @relation(fields: [patientId], references: [id])
+
+  specialistId       String?
+  specialist         DoctorProfile?  @relation("SpecialistReferrals", fields: [specialistId], references: [id])
+
+  speciality         String
+  reason             String
+  notes              String?
+
+  requestedByPatient Boolean         @default(false)
+  approvedAt         DateTime?
+
+  appointmentId      String?         @unique
+  appointment        Appointment?    @relation(fields: [appointmentId], references: [id])
+
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@index([patientId])
+  @@index([referringDoctorId])
+  @@map("referrals")
 }

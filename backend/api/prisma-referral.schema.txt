@@ -1,0 +1,58 @@
+﻿// â”€â”€ ADD THESE TO YOUR schema.prisma â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//
+// 1. Add to existing DoctorProfile model:
+//    referralsGiven     Referral[] @relation("ReferringDoctor")
+//    referralsReceived  Referral[] @relation("SpecialistReferrals")
+//
+// 2. Add to existing PatientProfile model:
+//    referrals          Referral[]
+//
+// 3. Add to existing Appointment model:
+//    referral           Referral?
+//
+// 4. Add these new enums and model:
+
+enum ReferralStatus {
+  REQUESTED
+  PENDING
+  ACCEPTED
+  BOOKED
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+enum ReferralUrgency {
+  ROUTINE
+  URGENT
+  EMERGENCY
+}
+
+model Referral {
+  id                 String          @id @default(cuid())
+  referralCode       String          @unique
+  status             ReferralStatus  @default(PENDING)
+  urgency            ReferralUrgency @default(ROUTINE)
+
+  referringDoctorId  String
+  referringDoctor    DoctorProfile   @relation("ReferringDoctor", fields: [referringDoctorId], references: [id])
+
+  patientId          String
+  patient            PatientProfile  @relation(fields: [patientId], references: [id])
+
+  specialistId       String?
+  specialist         DoctorProfile?  @relation("SpecialistReferrals", fields: [specialistId], references: [id])
+
+  speciality         String
+  reason             String
+  notes              String?
+
+  requestedByPatient Boolean         @default(false)
+  approvedAt         DateTime?
+
+  appointmentId      String?         @unique
+  appointment        Appointment?    @relation(fields: [appointmentId], references: [id])
+
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+}

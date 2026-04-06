@@ -1,4 +1,4 @@
-﻿{
+{
   "compilerOptions": {
     "module": "commonjs",
     "declaration": true,
@@ -6,10 +6,11 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
+    "baseUrl": "./api",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
@@ -18,18 +19,9 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@/common/*": ["src/common/*"],
-      "@/config/*": ["src/config/*"],
-      "@/modules/*": ["src/modules/*"],
-      "@/database/*": ["src/database/*"]
+      "@prisma/client": ["node_modules/@prisma/client"],
+      "@nestjs/*": ["node_modules/@nestjs/*"]
     }
   },
   "include": ["src/**/*"]
-}{
-  "compilerOptions": {
-    "baseUrl": "./",
-    "paths": {
-      "@prisma/*": ["node_modules/.prisma/client"]
-    }
-  }
 }

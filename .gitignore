@@ -22,3 +22,8 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
+
+node_modules/
+backend/node_modules/
+backend/dist/
+dist/

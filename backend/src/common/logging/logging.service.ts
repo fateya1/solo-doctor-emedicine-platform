@@ -1,25 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import * as winston from 'winston';
+import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class LoggingService {
-  private logger: winston.Logger;
+  private readonly logger = new Logger(LoggingService.name);
 
-  constructor() {
-    this.logger = winston.createLogger({
-      level: 'info',
-      transports: [
-        new winston.transports.Console(),
-        new winston.transports.File({ filename: 'application.log' }),
-      ],
-    });
-  }
-
-  log(message: string) {
-    this.logger.info(message);
-  }
-
-  error(message: string) {
-    this.logger.error(message);
-  }
+  log(message: string) { this.logger.log(message); }
+  error(message: string, trace?: string) { this.logger.error(message, trace); }
+  warn(message: string) { this.logger.warn(message); }
+  debug(message: string) { this.logger.debug(message); }
 }
