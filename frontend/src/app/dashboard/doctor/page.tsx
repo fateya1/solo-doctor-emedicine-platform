@@ -18,7 +18,7 @@ import { ConsultationNotesModal } from "@/components/consultation-notes-modal";
 import { FollowUpModal } from "@/components/follow-up-modal";
 import { VideoButton } from "@/components/video-button";
 
-type Tab = "appointments" | "slots" | "analytics" | "subscription";
+type Tab = "appointments" | "slots" | "analytics" | "subscription" | "messages";
 
 export default function DoctorDashboard() {
   const { user, token, logout, _hasHydrated } = useAuthStore();
@@ -130,10 +130,11 @@ export default function DoctorDashboard() {
     : null;
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: "appointments", label: "Appointments" },
-    { key: "slots", label: "Availability" },
-    { key: "analytics", label: "Analytics" },
-    { key: "subscription", label: "Subscription" },
+    { key: "appointments", label: t("nav", "appointments") },
+    { key: "slots", label: t("nav", "availability") },
+    { key: "analytics", label: t("nav", "analytics") },
+    { key: "subscription", label: t("nav", "subscription") },
+    { key: "messages", label: "Messages" },
   ];
 
   const maxBar = analytics?.monthlyTrend
@@ -188,21 +189,21 @@ export default function DoctorDashboard() {
               <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center text-2xl shrink-0">👨‍⚕️</div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold text-slate-900">{user?.fullName}</h2>
-                <p className="text-sm text-slate-500">{profile.specialty ?? "General Practice"} · {profile.yearsOfExperience ?? 0} yrs experience</p>
-                <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{profile.bio ?? "No bio yet"}</p>
+                <p className="text-sm text-slate-500">{profile.specialty ?? t("doctor", "generalPractice")} · {profile.yearsOfExperience ?? 0} yrs experience</p>
+                <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{profile.bio ?? t("doctor", "noBio")}</p>
               </div>
               <div className="flex sm:flex-col items-start sm:items-end gap-2 flex-wrap">
                 <span className={`text-xs font-medium px-3 py-1 rounded-full ${
                   profile.isVerified ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-600"
                 }`}>
-                  {profile.isVerified ? "✓ Verified" : "⏳ Pending verification"}
+                  {profile.isVerified ? t("doctor", "verified") : t("doctor", "pendingVerification")}
                 </span>
                 {subDaysLeft !== null && (
                   <span className={`text-xs font-medium px-3 py-1 rounded-full ${
                     subDaysLeft > 7 ? "bg-blue-50 text-blue-700" :
                     subDaysLeft > 0 ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-600"
                   }`}>
-                    {subDaysLeft > 0 ? `${subscription?.plan} · ${subDaysLeft}d left` : "Subscription expired"}
+                    {subDaysLeft > 0 ? `${subscription?.plan} · ${subDaysLeft}d left` : t("doctor", "subscriptionExpired")}
                   </span>
                 )}
               </div>
@@ -213,10 +214,10 @@ export default function DoctorDashboard() {
         {/* Stats grid: 2 cols mobile → 4 cols desktop */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {[
-            { icon: Calendar, label: "Total appointments", value: appointments?.length ?? 0, color: "bg-purple-50 text-purple-600" },
-            { icon: CheckCircle, label: "Confirmed", value: confirmedAppts, color: "bg-green-50 text-green-600" },
-            { icon: TrendingUp, label: "Completed", value: completedAppts, color: "bg-blue-50 text-blue-600" },
-            { icon: Clock, label: "Available slots", value: totalSlots - bookedSlots, color: "bg-teal-50 text-teal-600" },
+            { icon: Calendar, label: t("doctor", "totalAppointments"), value: appointments?.length ?? 0, color: "bg-purple-50 text-purple-600" },
+            { icon: CheckCircle, label: t("doctor", "confirmed"), value: confirmedAppts, color: "bg-green-50 text-green-600" },
+            { icon: TrendingUp, label: t("doctor", "completed"), value: completedAppts, color: "bg-blue-50 text-blue-600" },
+            { icon: Clock, label: t("doctor", "availableSlots"), value: totalSlots - bookedSlots, color: "bg-teal-50 text-teal-600" },
           ].map(({ icon: Icon, label, value, color }) => (
             <div key={label} className="card">
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${color}`}>
@@ -255,14 +256,14 @@ export default function DoctorDashboard() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4">
                     <div>
                       <p className="text-sm font-semibold text-slate-800">
-                        {appt.patient?.user?.fullName ?? "Unknown Patient"}
+                        {appt.patient?.user?.fullName ?? t("doctor", "unknownPatient")}
                       </p>
                       <p className="text-xs text-slate-500">
                         {appt.availabilitySlot?.startTime
                           ? format(new Date(appt.availabilitySlot.startTime), "EEEE, MMM d yyyy · h:mm a")
                           : "N/A"}
                       </p>
-                      <p className="text-xs text-slate-400 mt-0.5">{appt.reason ?? "General consultation"}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{appt.reason ?? t("doctor", "generalConsultation")}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
@@ -271,7 +272,7 @@ export default function DoctorDashboard() {
                         appt.status === "CANCELLED" ? "bg-red-50 text-red-600" :
                         appt.status === "NO_SHOW" ? "bg-slate-100 text-slate-500" :
                         "bg-amber-50 text-amber-700"
-                      }`}>{appt.status}</span>
+                      }`}>{ {"CONFIRMED": t("appointment","status.CONFIRMED" as any)||"Confirmed","COMPLETED":t("appointment","status.COMPLETED" as any)||"Completed","CANCELLED":t("appointment","status.CANCELLED" as any)||"Cancelled","NO_SHOW":t("appointment","status.NO_SHOW" as any)||"No Show","PENDING":t("appointment","status.PENDING" as any)||"Pending"}[appt.status] || appt.status}</span>
                       {/* Intake form toggle */}
                       {appt.intakeForm && (
                         <button
@@ -279,7 +280,7 @@ export default function DoctorDashboard() {
                           className="flex items-center gap-1.5 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 px-2.5 py-1 rounded-lg touch-manipulation"
                         >
                           <ClipboardList className="w-3 h-3" />
-                          {expandedIntakeId === appt.id ? "Hide form" : "Intake form"}
+                          {expandedIntakeId === appt.id ? t("doctor", "hideForm") : t("doctor", "intakeForm")}
                         </button>
                       )}
                       {!appt.intakeForm && appt.status === "CONFIRMED" && (
@@ -329,17 +330,25 @@ export default function DoctorDashboard() {
                           📅 Follow-up
                         </button>
                       )}
+                      {/* Message button */}
+                      {(appt.status === "CONFIRMED" || appt.status === "COMPLETED") && appt.patientId && (
+                        <StartChatButton
+                          otherProfileId={appt.patientId}
+                          role="DOCTOR"
+                          label="Message"
+                        />
+                      )}
                       {/* Video + status buttons for CONFIRMED */}
                       {appt.status === "CONFIRMED" && (
                         <div className="flex gap-1">
                           <VideoButton appointmentId={appt.id} role="doctor" />
                           <button onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "COMPLETED" })}
-                            disabled={updateStatusMutation.isPending} title="Mark completed"
+                            disabled={updateStatusMutation.isPending} title=t("doctor", "markCompleted")
                             className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 touch-manipulation">
                             <CheckCircle className="w-4 h-4" />
                           </button>
                           <button onClick={() => updateStatusMutation.mutate({ id: appt.id, status: "NO_SHOW" })}
-                            disabled={updateStatusMutation.isPending} title="Mark no-show"
+                            disabled={updateStatusMutation.isPending} title=t("doctor", "markNoShow")
                             className="w-8 h-8 flex items-center justify-center bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 touch-manipulation">
                             <AlertCircle className="w-4 h-4" />
                           </button>
@@ -375,7 +384,7 @@ export default function DoctorDashboard() {
                   className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all touch-manipulation capitalize ${
                     slotView === v ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
                   }`}>
-                  {v === "slots" ? "My Slots" : "Templates"}
+                  {v === "slots" ? t("doctor", "mySlots") : t("doctor", "templates")}
                 </button>
               ))}
             </div>
@@ -436,7 +445,7 @@ export default function DoctorDashboard() {
                         <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
                           !slot.appointment ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"
                         }`}>
-                          {!slot.appointment ? "Available" : "Booked"}
+                          {!slot.appointment ? t("doctor", "available") : t("doctor", "booked")}
                         </span>
                       </div>
                     ))}
@@ -563,7 +572,7 @@ export default function DoctorDashboard() {
                     <h3 className="font-semibold text-slate-900 mb-4">Appointment breakdown</h3>
                     <div className="space-y-3">
                       {[
-                        { label: "Completed", value: analytics.completedAppointments, color: "bg-blue-500" },
+                        { label: t("doctor", "completed"), value: analytics.completedAppointments, color: "bg-blue-500" },
                         { label: "Cancelled", value: analytics.cancelledAppointments, color: "bg-red-400" },
                         { label: "No-show", value: analytics.noShowAppointments, color: "bg-amber-400" },
                       ].map(({ label, value, color }) => {
@@ -620,9 +629,9 @@ export default function DoctorDashboard() {
                 {/* 1 col mobile → 3 cols desktop */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   {[
-                    { label: "Plan", value: subscription.plan },
-                    { label: "Status", value: subscription.status },
-                    { label: "Days remaining", value: subDaysLeft !== null ? `${subDaysLeft} days` : "N/A" },
+                    { label: t("doctor", "plan"), value: subscription.plan },
+                    { label: t("doctor", "status"), value: subscription.status },
+                    { label: t("doctor", "daysRemaining"), value: subDaysLeft !== null ? `${subDaysLeft} days` : "N/A" },
                   ].map(({ label, value }) => (
                     <div key={label} className="bg-slate-50 rounded-xl p-4">
                       <p className="text-xs text-slate-500 mb-1">{label}</p>

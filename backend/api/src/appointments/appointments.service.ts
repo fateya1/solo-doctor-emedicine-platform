@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
 import { SmsService } from "../email/sms.service";
 import { AuditService } from "../audit/audit.service";
+import { RevenueService } from "../revenue/revenue.service";
 import { BookSlotDto } from "./dto/book-slot.dto";
 import { AppointmentStatus } from "@prisma/client";
 
@@ -15,6 +16,7 @@ export class AppointmentsService {
     private readonly emailService: EmailService,
     private readonly auditService: AuditService,
     private readonly smsService: SmsService,
+    private readonly revenueService: RevenueService,
   ) {}
 
   async bookSlot(userId: string, dto: BookSlotDto) {
@@ -151,6 +153,15 @@ export class AppointmentsService {
         ...(status === AppointmentStatus.CANCELLED ? { cancelledAt: new Date() } : {}),
       },
     });
+
+    // Auto-record commission when appointment completed
+    if (status === AppointmentStatus.COMPLETED) {
+      this.revenueService.recordCommission(appointmentId).catch(() => {});
+    }
+
+    if (status === AppointmentStatus.COMPLETED) {
+      this.revenueService.recordCommission(appointmentId).catch(() => {});
+    }
 
     if (status === AppointmentStatus.CANCELLED) {
       await this.prisma.availabilitySlot.update({

@@ -6,13 +6,13 @@ import {
   Users, Building2, Stethoscope, Calendar, ShieldCheck,
   LogOut, CheckCircle, XCircle, Clock, ChevronRight,
   Activity, CreditCard, TrendingUp, Menu, X,
-  FileText, Filter, Search, RefreshCw, Globe, User as UserIcon
+  FileText, Filter, Search, RefreshCw, Globe, User as UserIcon, DollarSign, ArrowUp, ArrowDown, Banknote
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 
-type Tab = "overview" | "tenants" | "doctors" | "patients" | "appointments" | "subscriptions" | "audit-logs";
+type Tab = "overview" | "tenants" | "doctors" | "patients" | "appointments" | "subscriptions" | "audit-logs" | "revenue";
 
 export default function AdminDashboard() {
   const { user, token, logout, _hasHydrated } = useAuthStore();
@@ -68,6 +68,45 @@ export default function AdminDashboard() {
     queryKey: ["admin-appointments"],
     queryFn: () => apiClient.get("/admin/appointments/recent").then((r) => r.data),
     enabled: !!token && _hasHydrated && tab === "appointments",
+  });
+
+  const { data: revenueSummary } = useQuery({
+    queryKey: ["admin-revenue-summary"],
+    queryFn: () => apiClient.get("/revenue/summary").then((r) => r.data),
+    enabled: !!token && _hasHydrated && tab === "revenue",
+  });
+
+  const { data: doctorEarnings } = useQuery({
+    queryKey: ["admin-doctor-earnings"],
+    queryFn: () => apiClient.get("/revenue/doctor-earnings").then((r) => r.data),
+    enabled: !!token && _hasHydrated && tab === "revenue",
+  });
+
+  const { data: payouts, refetch: refetchPayouts } = useQuery({
+    queryKey: ["admin-payouts"],
+    queryFn: () => apiClient.get("/revenue/payouts").then((r) => r.data),
+    enabled: !!token && _hasHydrated && tab === "revenue",
+  });
+
+  const createPayoutMutation = useMutation({
+    mutationFn: (data: { doctorProfileId: string; amount: number; periodStart: string; periodEnd: string; phoneNumber: string; notes?: string }) =>
+      apiClient.post(`/revenue/payouts/${data.doctorProfileId}`, data),
+    onSuccess: () => {
+      refetchPayouts();
+      setPayoutModal(null);
+      setPayoutAmount("");
+      setPayoutPhone("");
+      setPayoutNotes("");
+      queryClient.invalidateQueries({ queryKey: ["admin-doctor-earnings"] });
+    },
+    onError: (err: any) => alert(err.response?.data?.message || "Failed to create payout."),
+  });
+
+  const updatePayoutMutation = useMutation({
+    mutationFn: ({ id, status, mpesaReceiptNo }: { id: string; status: string; mpesaReceiptNo?: string }) =>
+      apiClient.patch(`/revenue/payouts/${id}/status`, { status, mpesaReceiptNo }),
+    onSuccess: () => refetchPayouts(),
+    onError: (err: any) => alert(err.response?.data?.message || "Failed to update payout."),
   });
 
   const { data: subscriptions } = useQuery({

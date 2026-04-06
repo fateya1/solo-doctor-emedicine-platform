@@ -6,22 +6,20 @@ type Section = keyof typeof translations.en;
 type Keys<S extends Section> = keyof typeof translations.en[S];
 
 /**
- * useT() — returns a typed translation function.
- *
- * Usage:
- *   const t = useT();
- *   t("common", "save")          // → "Save" | "Hifadhi" | "Enregistrer"
- *   t("auth", "welcomeBack")     // → "Welcome back" | "Karibu tena" | "Bon retour"
+ * useT() returns a typed translation function.
+ * Supports flat keys including dynamic ones like t("appointment", `status${status}`)
  */
 export function useT() {
   const locale = useLanguageStore((s) => s.locale);
 
-  function t<S extends Section>(section: S, key: Keys<S>): string {
-    const localeData = translations[locale] as typeof translations.en;
-    const fallback = translations.en;
-    const val = (localeData[section] as any)[key as string];
-    if (val !== undefined) return val as string;
-    return (fallback[section] as any)[key as string] as string;
+  function t<S extends Section>(section: S, key: Keys<S> | string): string {
+    const localeData = (translations[locale] as any);
+    const fallback = (translations.en as any);
+    const val = localeData?.[section]?.[key as string];
+    if (val !== undefined && val !== null) return String(val);
+    const fallbackVal = fallback?.[section]?.[key as string];
+    if (fallbackVal !== undefined && fallbackVal !== null) return String(fallbackVal);
+    return String(key);
   }
 
   return t;

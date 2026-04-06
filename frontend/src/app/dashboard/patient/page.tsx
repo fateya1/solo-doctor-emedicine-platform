@@ -144,9 +144,9 @@ export default function PatientDashboard() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5 mb-6 sm:mb-8">
           {[
-            { icon: Calendar, label: "Total appointments", value: appointments?.length ?? 0 },
-            { icon: Clock, label: "Confirmed", value: confirmedAppts },
-            { icon: User, label: "Profile", value: profile ? "Complete" : "Loading..." },
+            { icon: Calendar, label: t("patient", "totalAppointments"), value: appointments?.length ?? 0 },
+            { icon: Clock, label: t("patient", "confirmed"), value: confirmedAppts },
+            { icon: User, label: t("patient", "profile"), value: profile ? t("patient", "profileComplete") : t("patient", "profileLoading") },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="card flex sm:flex-col items-center sm:items-start gap-4 sm:gap-0 p-4 sm:p-5">
               <div className="w-9 h-9 bg-brand-50 rounded-xl flex items-center justify-center sm:mb-3 shrink-0">
@@ -209,12 +209,12 @@ export default function PatientDashboard() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input value={searchName} onChange={(e) => setSearchName(e.target.value)}
-                    placeholder="Doctor name..." className="input pl-9 w-full" />
+                    placeholder={t("patient", "doctorNamePlaceholder")} className="input pl-9 w-full" />
                 </div>
                 <div className="relative flex-1">
                   <Stethoscope className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input value={searchSpecialty} onChange={(e) => setSearchSpecialty(e.target.value)}
-                    placeholder="Specialty (e.g. Cardiology)..." className="input pl-9 w-full" />
+                    placeholder={t("patient", "specialtyPlaceholder")} className="input pl-9 w-full" />
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => setSearchQuery({ name: searchName, specialty: searchSpecialty })}
@@ -277,14 +277,14 @@ export default function PatientDashboard() {
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                         <div>
                           <p className="text-sm font-semibold text-slate-800">
-                            Dr. {appt.availabilitySlot?.doctor?.user?.fullName ?? "Unknown"}
+                            Dr. {appt.availabilitySlot?.doctor?.user?.fullName ?? t("doctor", "unknownPatient")}
                           </p>
                           <p className="text-xs text-slate-500">
                             {appt.availabilitySlot?.startTime
                               ? format(new Date(appt.availabilitySlot.startTime), "EEEE, MMM d yyyy · h:mm a")
                               : "N/A"}
                           </p>
-                          <p className="text-xs text-slate-400">{appt.reason ?? "General consultation"}</p>
+                          <p className="text-xs text-slate-400">{appt.reason ?? t("doctor", "generalConsultation")}</p>
                         </div>
                         <span className={`text-xs font-medium px-2.5 py-1 rounded-full w-fit ${
                           appt.status === "CONFIRMED" ? "bg-green-50 text-green-700" :
@@ -292,7 +292,7 @@ export default function PatientDashboard() {
                           appt.status === "CANCELLED" ? "bg-red-50 text-red-600" :
                           appt.status === "NO_SHOW" ? "bg-slate-100 text-slate-500" :
                           "bg-amber-50 text-amber-700"
-                        }`}>{appt.status}</span>
+                        }`}>{t("appointment", `status${appt.status}` as any) || appt.status}</span>
                       </div>
 
                       <div className="flex items-center gap-2 flex-wrap">
@@ -306,7 +306,7 @@ export default function PatientDashboard() {
                             }`}
                           >
                             <ClipboardList className="w-3 h-3" />
-                            {hasForm ? "Edit intake form" : "Fill intake form"}
+                            {hasForm ? t("patient", "editIntakeForm") : t("patient", "fillIntakeForm")}
                             {!hasForm && isConfirmed && (
                               <span className="bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-0.5">New</span>
                             )}
@@ -511,7 +511,7 @@ function DoctorCard({ doctor, onBooked }: {
                       {format(new Date(slot.startTime), "MMM d · h:mm a")}
                     </p>
                     <input value={reason} onChange={(e) => setReason(e.target.value)}
-                      placeholder="Reason for visit (optional)" className="input text-xs mb-2 w-full" />
+                      placeholder={t("patient", "reasonPlaceholder")} className="input text-xs mb-2 w-full" />
                     <div className="flex gap-2">
                       <button onClick={() => bookMutation.mutate(slot.id)}
                         disabled={bookMutation.isPending}
