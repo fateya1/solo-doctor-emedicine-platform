@@ -13,7 +13,7 @@ import { VideoButton } from "@/components/video-button";
 import { PrescriptionDownload } from "@/components/prescription-download";
 import { ReviewModal } from "@/components/review-modal";
 import { MedicalHistory } from "@/components/medical-history";
-import { ChatPanel } from "@/components/chat";
+import { ChatPanel, StartChatButton } from "@/components/chat";
 import { IntakeFormModal } from "@/components/intake-form-modal";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useT } from "@/lib/i18n";
@@ -338,6 +338,11 @@ export default function PatientDashboard() {
                           cancellingId === appt.id ? (
                             <div className="flex gap-1">
                               <VideoButton appointmentId={appt.id} role="patient" />
+                              <StartChatButton
+                                otherProfileId={appt.availabilitySlot?.doctor?.id}
+                                role="PATIENT"
+                                label="Message Doctor"
+                              />
                               <button onClick={() => cancelMutation.mutate(appt.id)}
                                 disabled={cancelMutation.isPending}
                                 className="text-xs bg-red-600 text-white px-3 py-2 rounded-lg flex items-center gap-1 touch-manipulation">
@@ -352,6 +357,11 @@ export default function PatientDashboard() {
                           ) : (
                             <div className="flex gap-1">
                               <VideoButton appointmentId={appt.id} role="patient" />
+                              <StartChatButton
+                                otherProfileId={appt.availabilitySlot?.doctor?.id}
+                                role="PATIENT"
+                                label="Message Doctor"
+                              />
                               <button onClick={() => setCancellingId(appt.id)}
                                 className="text-xs bg-red-50 text-red-600 hover:bg-red-100 px-3 py-2 rounded-lg transition-colors touch-manipulation">
                                 Cancel
@@ -554,3 +564,5 @@ function DoctorCard({ doctor, onBooked }: {
     </div>
   );
 }
+
+
