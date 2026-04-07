@@ -46,3 +46,7 @@ frontend/fix_*.py
 frontend/find_*.py
 backend/fix_*.py
 backend/inspect*.py
+
+# Playwright
+frontend/playwright-report/
+frontend/test-results/
