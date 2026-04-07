@@ -1,14 +1,14 @@
 import { Page } from "@playwright/test";
 
 export const TEST_PATIENT = {
-  email: "testpatient@solodoc.com",
-  password: "Test@1234",
+  email: "e2e.patient@solodoc.test",
+  password: "E2eTest@1234",
   name: "Test Patient",
 };
 
 export const TEST_DOCTOR = {
-  email: "testdoctor@solodoc.com",
-  password: "Test@1234",
+  email: "e2e.doctor@solodoc.test",
+  password: "E2eTest@1234",
   name: "Test Doctor",
 };
 
