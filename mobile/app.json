@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "SoloDoc",
+    "slug": "solo-doctor-emedicine-platform",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2563EB"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.solodoc.emedicine",
+      "infoPlist": {
+        "NSCameraUsageDescription": "SoloDoc needs camera access for video consultations.",
+        "NSMicrophoneUsageDescription": "SoloDoc needs microphone access for video consultations."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2563EB"
+      },
+      "package": "com.solodoc.emedicine",
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-notifications",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow SoloDoc to access your camera for video consultations."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "48432ace-bcd2-4acc-84a2-7955df6366d4"
+      }
+    },
+    "owner": "fateya1"
+  }
+}
