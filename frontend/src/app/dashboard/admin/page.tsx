@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import AdminMigrationsPage from "./migrations/page";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Users, Building2, Stethoscope, Calendar, ShieldCheck,
@@ -12,7 +13,7 @@ import { useAuthStore } from "@/store/auth";
 import { apiClient } from "@/lib/api";
 import { format } from "date-fns";
 
-type Tab = "overview" | "tenants" | "doctors" | "patients" | "appointments" | "subscriptions" | "audit-logs" | "revenue";
+type Tab = "overview" | "tenants" | "doctors" | "patients" | "appointments" | "subscriptions" | "audit-logs" | "revenue" | "migrations";
 
 export default function AdminDashboard() {
   const { user, token, logout, _hasHydrated } = useAuthStore();
@@ -21,7 +22,7 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState<Tab>("overview");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // â”€â”€ Audit log filters â”€â”€
+  // ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Audit log filters ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
   const [payoutModal, setPayoutModal] = useState<{ doctorProfileId: string; doctorName: string } | null>(null);
   const [payoutAmount, setPayoutAmount] = useState("");
   const [payoutPhone, setPayoutPhone] = useState("");
@@ -180,6 +181,7 @@ export default function AdminDashboard() {
     { key: "subscriptions", label: "Subscriptions", icon: CreditCard },
     { key: "audit-logs", label: "Audit Logs", icon: FileText },
     { key: "revenue", label: "Revenue", icon: Banknote },
+    { key: "migrations", label: "Migrations", icon: FileText },
   ];
 
   const statusColor: Record<string, string> = {
@@ -198,7 +200,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* â”€â”€ Header â”€â”€ */}
+      {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Header ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
       <header className="bg-white border-b border-slate-100 px-4 sm:px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -250,7 +252,7 @@ export default function AdminDashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* â”€â”€ Tabs: horizontally scrollable on mobile â”€â”€ */}
+        {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Tabs: horizontally scrollable on mobile ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
         <div className="mb-6 sm:mb-8 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
           <div className="flex gap-1 bg-white border border-slate-100 rounded-xl p-1 w-max">
             {tabs.map(({ key, label, icon: Icon }) => (
@@ -265,11 +267,11 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* â”€â”€ Overview â”€â”€ */}
+        {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Overview ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
         {tab === "overview" && (
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-5 sm:mb-6">Platform Overview</h2>
-            {/* 2 cols mobile â†’ 3 cols tablet â†’ 6 cols desktop */}
+            {/* 2 cols mobile ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ 3 cols tablet ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ 6 cols desktop */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
               {[
                 { label: "Tenants", value: stats?.totalTenants ?? 0, icon: Building2, color: "bg-blue-50 text-blue-600" },
@@ -314,7 +316,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* â”€â”€ Tenants â”€â”€ */}
+        {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Tenants ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
         {tab === "tenants" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5">All Tenants ({tenants?.length ?? 0})</h2>
@@ -325,7 +327,7 @@ export default function AdminDashboard() {
                     <p className="text-sm font-semibold text-slate-800">{t.name}</p>
                     <p className="text-xs text-slate-500">Slug: {t.slug}</p>
                     <p className="text-xs text-slate-400">
-                      {t._count.users} users  ·  Created {format(new Date(t.createdAt), "MMM d, yyyy")}
+                      {t._count.users} users  Ã‚Â·  Created {format(new Date(t.createdAt), "MMM d, yyyy")}
                     </p>
                     {t.subscription && (
                       <div className="flex gap-2 mt-1 flex-wrap">
@@ -357,7 +359,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* â”€â”€ Doctors â”€â”€ */}
+        {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Doctors ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
         {tab === "doctors" && (
           <div className="space-y-6">
             {(pendingDoctors?.length ?? 0) > 0 && (
@@ -388,7 +390,7 @@ export default function AdminDashboard() {
                     <div>
                       <p className="text-sm font-medium text-slate-800">{d.user.fullName}</p>
                       <p className="text-xs text-slate-500">{d.user.email}</p>
-                      <p className="text-xs text-slate-400">{d.specialty ?? "General Practice"}  ·  Joined {format(new Date(d.user.createdAt), "MMM d, yyyy")}</p>
+                      <p className="text-xs text-slate-400">{d.specialty ?? "General Practice"}  Ã‚Â·  Joined {format(new Date(d.user.createdAt), "MMM d, yyyy")}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${d.isVerified ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-600"}`}>
@@ -410,7 +412,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* â”€â”€ Patients â”€â”€ */}
+        {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Patients ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
         {tab === "patients" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5">All Patients ({patients?.length ?? 0})</h2>
@@ -420,7 +422,7 @@ export default function AdminDashboard() {
                   <div>
                     <p className="text-sm font-medium text-slate-800">{p.user.fullName}</p>
                     <p className="text-xs text-slate-500">{p.user.email}</p>
-                    <p className="text-xs text-slate-400">{p._count.appointments} appointments  ·  Joined {format(new Date(p.user.createdAt), "MMM d, yyyy")}</p>
+                    <p className="text-xs text-slate-400">{p._count.appointments} appointments  Ã‚Â·  Joined {format(new Date(p.user.createdAt), "MMM d, yyyy")}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${p.user.isActive ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
@@ -438,7 +440,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* â”€â”€ Appointments â”€â”€ */}
+        {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Appointments ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
         {tab === "appointments" && (
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5">Recent Appointments</h2>
@@ -447,10 +449,10 @@ export default function AdminDashboard() {
                 <div key={a.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 bg-slate-50 rounded-xl">
                   <div>
                     <p className="text-sm font-medium text-slate-800">
-                      {a.patient?.user?.fullName} â†’ Dr. {a.availabilitySlot?.doctor?.user?.fullName}
+                      {a.patient?.user?.fullName} ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Dr. {a.availabilitySlot?.doctor?.user?.fullName}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {a.availabilitySlot?.startTime ? format(new Date(a.availabilitySlot.startTime), "MMM d, yyyy  ·  h:mm a") : "N/A"}
+                      {a.availabilitySlot?.startTime ? format(new Date(a.availabilitySlot.startTime), "MMM d, yyyy  Ã‚Â·  h:mm a") : "N/A"}
                     </p>
                     <p className="text-xs text-slate-400">{a.reason ?? "General consultation"}</p>
                   </div>
@@ -467,7 +469,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* â”€â”€ Subscriptions â”€â”€ */}
+        {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Subscriptions ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
         {/* Subscriptions */}
         {tab === "subscriptions" && (
           <div className="space-y-5">
@@ -516,7 +518,7 @@ export default function AdminDashboard() {
                             <span className="text-xs text-green-700 font-medium">KES {totalPaid.toLocaleString()} collected</span>
                             {lastPayment && (
                               <span className="text-xs text-slate-400">
-                                Last: KES {Number(lastPayment.amount).toLocaleString()} {"·"} {lastPayment.paidAt ? format(new Date(lastPayment.paidAt), "MMM d, yyyy") : lastPayment.status}
+                                Last: KES {Number(lastPayment.amount).toLocaleString()} {"Ã‚Â·"} {lastPayment.paidAt ? format(new Date(lastPayment.paidAt), "MMM d, yyyy") : lastPayment.status}
                               </span>
                             )}
                           </div>
@@ -530,7 +532,7 @@ export default function AdminDashboard() {
                         <div className="border-t border-slate-100 px-4 pb-3 pt-2 space-y-1.5">
                           {s.payments.map((p: any) => (
                             <div key={p.id} className="flex items-center justify-between text-xs">
-                              <span className="text-slate-600">KES {Number(p.amount).toLocaleString()} {"·"} {p.plan} {"·"} {p.mpesaReceiptNo ?? "No receipt"}</span>
+                              <span className="text-slate-600">KES {Number(p.amount).toLocaleString()} {"Ã‚Â·"} {p.plan} {"Ã‚Â·"} {p.mpesaReceiptNo ?? "No receipt"}</span>
                               <div className="flex items-center gap-2">
                                 <span className="text-slate-400">{p.paidAt ? format(new Date(p.paidAt), "MMM d, yyyy") : p.createdAt ? format(new Date(p.createdAt), "MMM d, yyyy") : "-"}</span>
                                 <span className={`px-2 py-0.5 rounded-full font-medium ${p.status === "COMPLETED" ? "bg-green-50 text-green-700" : p.status === "FAILED" ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-700"}`}>{p.status}</span>
@@ -650,7 +652,7 @@ export default function AdminDashboard() {
                     <div key={p.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 bg-slate-50 rounded-xl">
                       <div>
                         <p className="text-sm font-medium text-slate-800">{p.doctorName ?? "Doctor"}</p>
-                        <p className="text-xs text-slate-500">KES {Number(p.amount).toLocaleString()} · {p.mpesaReceiptNo ?? "Pending receipt"} · {p.createdAt ? format(new Date(p.createdAt), "MMM d, yyyy") : "—"}</p>
+                        <p className="text-xs text-slate-500">KES {Number(p.amount).toLocaleString()} Ã‚Â· {p.mpesaReceiptNo ?? "Pending receipt"} Ã‚Â· {p.createdAt ? format(new Date(p.createdAt), "MMM d, yyyy") : "Ã¢â‚¬â€"}</p>
                         {p.notes && <p className="text-xs text-slate-400 mt-0.5">{p.notes}</p>}
                       </div>
                       <div className="flex items-center gap-2">
@@ -660,7 +662,7 @@ export default function AdminDashboard() {
                             <button onClick={() => resendStkMutation.mutate(p.id)}
                               disabled={resendStkMutation.isPending}
                               className="text-xs bg-brand-50 text-brand-700 hover:bg-brand-100 px-2.5 py-1 rounded-lg touch-manipulation font-medium">
-                              📲 Resend STK
+                              Ã°Å¸â€œÂ² Resend STK
                             </button>
                             <button onClick={() => { const r = prompt("M-Pesa receipt:"); if (r) updatePayoutMutation.mutate({ id: p.id, status: "COMPLETED", mpesaReceiptNo: r }); }}
                               className="text-xs bg-green-50 text-green-700 hover:bg-green-100 px-2.5 py-1 rounded-lg touch-manipulation">Mark paid</button>
@@ -714,9 +716,9 @@ export default function AdminDashboard() {
   );
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Audit Logs Panel â€” standalone component to keep the main export clean
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+// Audit Logs Panel ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â standalone component to keep the main export clean
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 
 const ACTION_CATEGORIES = [
   { value: "", label: "All categories" },
@@ -795,7 +797,7 @@ function AuditLogsPanel({
 
   return (
     <div className="space-y-5">
-      {/* â”€â”€ Header row â”€â”€ */}
+      {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Header row ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="font-semibold text-slate-900 flex items-center gap-2">
@@ -813,7 +815,7 @@ function AuditLogsPanel({
         </button>
       </div>
 
-      {/* â”€â”€ Filters â”€â”€ */}
+      {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Filters ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
       <div className="card">
         <div className="flex items-center gap-2 mb-3">
           <Filter className="w-3.5 h-3.5 text-slate-400" />
@@ -834,7 +836,7 @@ function AuditLogsPanel({
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search actor, action, IPâ€¦"
+              placeholder="Search actor, action, IPÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦"
               className="input pl-8 text-xs w-full"
             />
           </div>
@@ -868,7 +870,7 @@ function AuditLogsPanel({
         </div>
       </div>
 
-      {/* â”€â”€ Log list â”€â”€ */}
+      {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Log list ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
       <div className="card">
         {loading ? (
           <div className="flex items-center justify-center py-16">
@@ -927,8 +929,8 @@ function AuditLogsPanel({
                           {/* Timestamp */}
                           <p className="text-xs text-slate-400 whitespace-nowrap shrink-0">
                             {log.createdAt
-                              ? format(new Date(log.createdAt), "MMM d, yyyy  ·  h:mm a")
-                              : "â€”"}
+                              ? format(new Date(log.createdAt), "MMM d, yyyy  Ã‚Â·  h:mm a")
+                              : "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}
                           </p>
                         </div>
 
@@ -952,11 +954,11 @@ function AuditLogsPanel({
                           {/* Target */}
                           {log.targetType && (
                             <div className="flex items-center gap-1 text-xs text-slate-400">
-                              <span>â†’</span>
+                              <span>ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</span>
                               <span className="capitalize">{log.targetType}</span>
                               {log.targetId && (
                                 <code className="font-mono text-xs bg-slate-100 px-1 rounded hidden sm:inline">
-                                  {log.targetId.slice(0, 8)}â€¦
+                                  {log.targetId.slice(0, 8)}ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦
                                 </code>
                               )}
                             </div>
@@ -988,7 +990,7 @@ function AuditLogsPanel({
               </div>
             </div>
 
-            {/* â”€â”€ Pagination â”€â”€ */}
+            {/* ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Pagination ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between pt-4 mt-2 border-t border-slate-100">
                 <button
@@ -996,7 +998,7 @@ function AuditLogsPanel({
                   onClick={() => setPage(page - 1)}
                   className="text-xs px-3 py-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-40 touch-manipulation"
                 >
-                  â† Previous
+                  ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Previous
                 </button>
                 <p className="text-xs text-slate-400">
                   Page {page} of {totalPages}
@@ -1006,7 +1008,7 @@ function AuditLogsPanel({
                   onClick={() => setPage(page + 1)}
                   className="text-xs px-3 py-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-40 touch-manipulation"
                 >
-                  Next â†’
+                  Next ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢
                 </button>
               </div>
             )}
