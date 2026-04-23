@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Outfit, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
@@ -7,10 +7,11 @@ import { LangSync } from "@/components/lang-sync";
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair", display: "swap" });
 
+export const viewport: Viewport = { themeColor: "#0d9488" };
+
 export const metadata: Metadata = {
   title: "SoloDoc | Kenya's E-Medicine Platform",
   description: "Connect with verified Kenyan doctors for online consultations, digital prescriptions, video calls and M-Pesa payments.",
-  keywords: ["telemedicine Kenya", "online doctor Kenya", "M-Pesa doctor", "SoloDoc"],
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
   openGraph: {
     title: "SoloDoc | Kenya's E-Medicine Platform",
