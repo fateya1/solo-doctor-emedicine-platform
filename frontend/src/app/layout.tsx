@@ -11,7 +11,6 @@ export const metadata: Metadata = {
   title: "SoloDoc | Kenya's E-Medicine Platform",
   description: "Connect with verified Kenyan doctors for online consultations, digital prescriptions, video calls and M-Pesa payments.",
   keywords: ["telemedicine Kenya", "online doctor Kenya", "M-Pesa doctor", "SoloDoc"],
-  themeColor: "#0d9488",
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
   openGraph: {
     title: "SoloDoc | Kenya's E-Medicine Platform",
