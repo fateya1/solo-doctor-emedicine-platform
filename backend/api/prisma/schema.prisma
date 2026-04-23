@@ -114,6 +114,7 @@ model Tenant {
   users        User[]
   subscription TenantSubscription?
 
+  migrations PatientMigration[]
   @@map("tenants")
 }
 
@@ -168,6 +169,7 @@ model DoctorProfile {
   referralsGiven        Referral[]             @relation("ReferringDoctor")
   referralsReceived     Referral[]             @relation("SpecialistReferrals")
 
+  migrations PatientMigration[]
   @@map("doctor_profiles")
 }
 
@@ -613,4 +615,59 @@ model Referral {
   @@index([patientId])
   @@index([referringDoctorId])
   @@map("referrals")
+}
+
+model PatientMigration {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  doctorId        String
+  doctor          DoctorProfile @relation(fields: [doctorId], references: [id])
+  fileName        String
+  status          MigrationStatus @default(PENDING)
+  totalRows       Int      @default(0)
+  processedRows   Int      @default(0)
+  failedRows      Int      @default(0)
+  errorLog        String?
+  approvedBy      String?
+  approvedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  patients        MigrationPatient[]
+  @@map("patient_migrations")
+}
+
+model MigrationPatient {
+  id              String   @id @default(cuid())
+  migrationId     String
+  migration       PatientMigration @relation(fields: [migrationId], references: [id])
+  fullName        String
+  email           String
+  phone           String?
+  medicalHistory  String?
+  diagnoses       String?
+  status          MigrationPatientStatus @default(PENDING)
+  userId          String?
+  errorMessage    String?
+  inviteToken     String?  @unique
+  inviteExpiry    DateTime?
+  createdAt       DateTime @default(now())
+  @@map("migration_patients")
+}
+
+enum MigrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum MigrationPatientStatus {
+  PENDING
+  CREATED
+  INVITED
+  ACTIVATED
+  FAILED
 }
