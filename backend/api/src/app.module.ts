@@ -25,6 +25,7 @@ import { IntakeFormsModule } from "./intake-forms/intake-forms.module";
 import { InsuranceModule } from "./insurance/insurance.module";
 import { ReferralModule } from "./referral/referral.module";
 import { MessagingModule } from "./messaging/messaging.module";
+import { MigrationModule } from "./migration/migration.module";
 import { throttlerConfig } from "./config/throttler.config";
 import { AppThrottlerGuard } from "./common/guards/throttler.guard";
 import { ThrottlerExceptionFilter } from "./common/filters/throttler-exception.filter";
@@ -55,6 +56,7 @@ import { ThrottlerExceptionFilter } from "./common/filters/throttler-exception.f
     InsuranceModule,
     ReferralModule,
     MessagingModule,
+    MigrationModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: SentryExceptionFilter },

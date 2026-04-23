@@ -64,7 +64,7 @@ export class EmailService {
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;">
           <div style="text-align:center;margin-bottom:32px;">
             <div style="display:inline-flex;align-items:center;justify-content:center;width:48px;height:48px;background:#eff6ff;border-radius:12px;margin-bottom:16px;">
-              <span style="font-size:24px;">🔒</span>
+              <span style="font-size:24px;">ðŸ”’</span>
             </div>
             <h1 style="color:#0f172a;margin:0;font-size:24px;">Reset your password</h1>
           </div>
@@ -74,8 +74,8 @@ export class EmailService {
             <a href="${resetUrl}" style="background:#0284c7;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600;font-size:15px;">Reset Password</a>
           </div>
           <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:16px 0;">
-            <p style="margin:0;color:#64748b;font-size:13px;">⏱ This link expires in <strong>1 hour</strong>.</p>
-            <p style="margin:8px 0 0;color:#64748b;font-size:13px;">🔐 If you didn't request a password reset, you can safely ignore this email. Your password will not change.</p>
+            <p style="margin:0;color:#64748b;font-size:13px;">â± This link expires in <strong>1 hour</strong>.</p>
+            <p style="margin:8px 0 0;color:#64748b;font-size:13px;">ðŸ” If you didn't request a password reset, you can safely ignore this email. Your password will not change.</p>
           </div>
           <p style="color:#94a3b8;font-size:12px;margin-top:24px;">
             If the button doesn't work, copy and paste this link into your browser:<br/>
@@ -351,11 +351,19 @@ export class EmailService {
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px;">
           <h1 style="color:#0284c7;">Good news, ${patientName}!</h1>
           <p>A slot has just become available with <strong>Dr. ${doctorName}</strong>.</p>
-          <p>Book now before it fills up — slots go fast!</p>
+          <p>Book now before it fills up â€” slots go fast!</p>
           <a href="${process.env.FRONTEND_URL}/doctors/${doctorProfileId}" style="background:#0284c7;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;margin-top:16px;">Book Now</a>
           <p style="color:#64748b;margin-top:32px;font-size:14px;">You received this because you joined the waitlist for Dr. ${doctorName}. The SoloDoc Team</p>
         </div>
       `,
+    });
+  }
+
+  async sendMigrationWelcome(to: string, fullName: string, doctorName: string, email: string, tempPassword: string, loginUrl: string): Promise<void> {
+    await this.send({
+      to,
+      subject: 'You have been invited to SoloDoc by Dr. ' + doctorName,
+      html: '<div style="font-family:sans-serif;max-width:600px;margin:0 auto"><div style="background:#0d9488;padding:24px;border-radius:8px 8px 0 0"><h1 style="color:#fff;margin:0">Welcome to SoloDoc!</h1></div><div style="background:#f8fafc;padding:24px;border-radius:0 0 8px 8px"><p>Dear <strong>' + fullName + '</strong>,</p><p>Your doctor, <strong>Dr. ' + doctorName + '</strong>, has migrated your records to SoloDoc.</p><p>Your account is ready. Log in with the credentials below and change your password immediately.</p><div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:16px 0"><p style="margin:0"><strong>Email:</strong> ' + email + '</p><p style="margin:8px 0 0"><strong>Temporary Password:</strong> <code style="background:#f1f5f9;padding:2px 8px;border-radius:4px">' + tempPassword + '</code></p></div><a href="' + loginUrl + '" style="display:inline-block;background:#0d9488;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700">Login to SoloDoc</a></div></div>',
     });
   }
 }
