@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={${outfit.variable} }>
+    <html lang="en" className={outfit.variable + " " + playfair.variable}>
       <body className="font-sans bg-slate-50 text-slate-900 antialiased">
         <Providers>
           <LangSync />
