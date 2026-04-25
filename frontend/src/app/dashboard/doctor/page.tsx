@@ -19,6 +19,7 @@ import { FollowUpModal } from "@/components/follow-up-modal";
 import { VideoButton } from "@/components/video-button";
 import { ChatPanel, StartChatButton } from "@/components/chat";
 import { MessageSquare } from "lucide-react";
+import PlanUsageCard from "@/components/plan-usage-card";
 import DoctorMigrationPage from "./migration/page";
 
 function MigrationPanel() {
@@ -623,6 +624,8 @@ export default function DoctorDashboard() {
 
         {/* Subscription Tab */}
         {tab === "subscription" && (
+        <div className="space-y-6">
+          <PlanUsageCard />
           <div className="card">
             <h2 className="font-semibold text-slate-900 mb-5 flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-brand-600" /> Subscription
@@ -693,18 +696,13 @@ export default function DoctorDashboard() {
               </div>
             )}
           </div>
+          </div>
         )}
       </div>
 
-      {/* Messages Tab */}
-      {tab === "messages" && (
-        <div className="card">
-          <h2 className="font-semibold text-slate-900 mb-5 flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-brand-600" /> Patient Messages
-          </h2>
-          <ChatPanel role="DOCTOR" />
-        </div>
-      )}
+
+        {/* Migration Tab */}
+        {tab === "migration" && <MigrationPanel />}
 
       {/* Modals */}
       {prescriptionAppt && (

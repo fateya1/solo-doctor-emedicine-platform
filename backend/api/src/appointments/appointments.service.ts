@@ -5,6 +5,7 @@ import { SmsService } from "../email/sms.service";
 import { AuditService } from "../audit/audit.service";
 import { RevenueService } from "../revenue/revenue.service";
 import { BookSlotDto } from "./dto/book-slot.dto";
+import { PlanLimitsService } from "../subscription/plan-limits.service";
 import { AppointmentStatus } from "@prisma/client";
 
 @Injectable()
@@ -13,6 +14,7 @@ export class AppointmentsService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly planLimits: PlanLimitsService,
     private readonly emailService: EmailService,
     private readonly auditService: AuditService,
     private readonly smsService: SmsService,
@@ -20,6 +22,9 @@ export class AppointmentsService {
   ) {}
 
   async bookSlot(userId: string, dto: BookSlotDto) {
+    // Check plan limits
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (user) await this.planLimits.checkAppointmentLimit(user.tenantId);
     return this.prisma.$transaction(async (tx) => {
       const slot = await tx.availabilitySlot.findUnique({
         where: { id: dto.slotId },

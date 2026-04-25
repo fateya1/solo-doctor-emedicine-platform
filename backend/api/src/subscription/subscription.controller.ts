@@ -1,11 +1,15 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { SubscriptionService } from "./subscription.service";
+import { PlanLimitsService } from "./plan-limits.service";
 import { SubscriptionPlan } from "@prisma/client";
 
 @Controller("subscription")
 export class SubscriptionController {
-  constructor(private readonly service: SubscriptionService) {}
+  constructor(
+    private readonly service: SubscriptionService,
+    private readonly planLimits: PlanLimitsService,
+  ) {}
 
   @Get("plans")
   getPlans() {
@@ -30,6 +34,12 @@ export class SubscriptionController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
+  @Get("usage")
+  getUsage(@Req() req: any) {
+    return this.planLimits.getUsage(req.user.tenantId);
+  }
+
   @Post("mpesa/simulate")
   simulate(@Body() body: { paymentId: string }) {
     return this.service.simulatePayment(body.paymentId);
