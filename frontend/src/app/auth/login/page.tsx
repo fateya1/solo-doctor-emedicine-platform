@@ -31,7 +31,10 @@ export default function LoginPage() {
   const onSubmit = async (data: FormData) => {
     setError("");
     try {
-      const res = await apiClient.post("/auth/login", data);
+      const res = await apiClient.post("/auth/login", {
+        ...data,
+        tenantId: process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID,
+      });
       const { accessToken, user } = res.data;
       setAuth(accessToken, user);
       await new Promise((resolve) => setTimeout(resolve, 50));
