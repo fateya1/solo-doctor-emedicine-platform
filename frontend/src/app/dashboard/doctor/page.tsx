@@ -194,7 +194,7 @@ export default function DoctorDashboard() {
         {profile && (
           <div className="card mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center text-2xl shrink-0">Ò°�&¸â���S�¨Ò¢â�a¬�Ò¢�&¡â��¢Ò¯�¸�</div>
+              <div className="w-14 h-14 bg-brand-100 rounded-2xl flex items-center justify-center text-2xl shrink-0">Ұ�&�����S��Ң��a���Ң�&�����ү����</div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold text-slate-900">{user?.fullName}</h2>
                 <p className="text-sm text-slate-500">{profile.specialty ?? t("doctor", "generalPractice")} · {profile.yearsOfExperience ?? 0} yrs experience</p>
@@ -219,7 +219,7 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* Stats grid: 2 cols mobile Ò¢â�� â���� 4 cols desktop */}
+        {/* Stats grid: 2 cols mobile Ң��������� 4 cols desktop */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {[
             { icon: Calendar, label: t("doctor", "totalAppointments"), value: appointments?.length ?? 0, color: "bg-purple-50 text-purple-600" },
@@ -309,7 +309,7 @@ export default function DoctorDashboard() {
                           }`}
                           title={appt.prescription ? "Edit prescription" : "Write prescription"}
                         >
-                          Ò°�&¸â�����&  {appt.prescription ? "Rx" : "Rx+"}
+                          Ұ�&�������&� {appt.prescription ? "Rx" : "Rx+"}
                         </button>
                       )}
                       {/* Consultation notes button */}
@@ -322,7 +322,7 @@ export default function DoctorDashboard() {
                           className="flex items-center gap-1 text-xs bg-slate-50 text-slate-600 hover:bg-slate-100 px-2.5 py-1 rounded-lg touch-manipulation"
                           title="Consultation notes (SOAP)"
                         >
-                          Ò°�&¸â���â��¹ Notes
+                          Ұ�&��������� Notes
                         </button>
                       )}
                       {/* Follow-up button */}
@@ -335,7 +335,7 @@ export default function DoctorDashboard() {
                           className="flex items-center gap-1 text-xs bg-teal-50 text-teal-700 hover:bg-teal-100 px-2.5 py-1 rounded-lg touch-manipulation"
                           title="Schedule follow-up"
                         >
-                          Ò°�&¸â���â��¦ Follow-up
+                          Ұ�&��������� Follow-up
                         </button>
                       )}
                       {/* Video + status buttons for CONFIRMED */}
@@ -428,7 +428,7 @@ export default function DoctorDashboard() {
                     <p className="text-slate-400 text-sm mb-3">No slots added yet.</p>
                     <button onClick={() => setSlotView("templates")}
                       className="text-sm text-brand-600 hover:underline touch-manipulation">
-                      Use a weekly template instead Ò¢â�� â����
+                      Use a weekly template instead Ң���������
                     </button>
                   </div>
                 ) : (
@@ -440,7 +440,7 @@ export default function DoctorDashboard() {
                             {format(new Date(slot.startTime), "EEEE, MMM d yyyy")}
                           </p>
                           <p className="text-xs text-slate-500">
-                            {format(new Date(slot.startTime), "h:mm a")} Ò¢â�a¬â��� {format(new Date(slot.endTime), "h:mm a")}
+                            {format(new Date(slot.startTime), "h:mm a")} Ң��a����� {format(new Date(slot.endTime), "h:mm a")}
                           </p>
                         </div>
                         <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
@@ -469,7 +469,7 @@ export default function DoctorDashboard() {
               </div>
             ) : (
               <>
-                {/* KPI cards: 2 cols mobile Ò¢â�� â���� 4 cols desktop */}
+                {/* KPI cards: 2 cols mobile Ң��������� 4 cols desktop */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                   {[
                     {
@@ -528,7 +528,7 @@ export default function DoctorDashboard() {
 
                 {/* Monthly trend bar chart */}
                 <div className="card">
-                  <h3 className="font-semibold text-slate-900 mb-6">Appointments Ò¢â�a¬â��� last 6 months</h3>
+                  <h3 className="font-semibold text-slate-900 mb-6">Appointments Ң��a����� last 6 months</h3>
                   <div className="flex items-end gap-2 sm:gap-3 h-40">
                     {analytics.monthlyTrend.map((m: any) => (
                       <div key={m.month} className="flex-1 flex flex-col items-center gap-2">
@@ -547,7 +547,7 @@ export default function DoctorDashboard() {
 
                 {/* Revenue trend */}
                 <div className="card">
-                  <h3 className="font-semibold text-slate-900 mb-4">Revenue Ò¢â�a¬â��� last 6 months</h3>
+                  <h3 className="font-semibold text-slate-900 mb-4">Revenue Ң��a����� last 6 months</h3>
                   <div className="space-y-3">
                     {analytics.monthlyTrend.map((m: any) => {
                       const maxRevenue = Math.max(...analytics.monthlyTrend.map((x: any) => x.revenue), 1);
@@ -639,7 +639,7 @@ export default function DoctorDashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                {/* 1 col mobile Ò¢â�� â���� 3 cols desktop */}
+                {/* 1 col mobile Ң��������� 3 cols desktop */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   {[
                     { label: t("doctor", "plan"), value: subscription.plan },
@@ -655,13 +655,13 @@ export default function DoctorDashboard() {
                 <div className="bg-slate-50 rounded-xl p-4">
                   <p className="text-xs text-slate-500 mb-1">Billing period</p>
                   <p className="text-sm font-medium text-slate-800">
-                    {format(new Date(subscription.currentPeriodStart), "MMM d, yyyy")} Ò¢â�a¬â���{" "}
+                    {format(new Date(subscription.currentPeriodStart), "MMM d, yyyy")} Ң��a�����{" "}
                     {format(new Date(subscription.currentPeriodEnd), "MMM d, yyyy")}
                   </p>
                 </div>
                 {subDaysLeft !== null && subDaysLeft <= 7 && (
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                    <p className="text-sm text-amber-800 font-medium">Ò¢�&¡� Ò¯�¸� Your subscription expires soon</p>
+                    <p className="text-sm text-amber-800 font-medium">Ң�&���ү���� Your subscription expires soon</p>
                     <p className="text-xs text-amber-700 mt-1">Renew now to avoid service interruption.</p>
                     <button onClick={() => router.push("/onboarding")}
                       className="mt-3 text-xs bg-amber-600 text-white px-4 py-2.5 rounded-lg hover:bg-amber-700 touch-manipulation">
@@ -680,7 +680,7 @@ export default function DoctorDashboard() {
                               KES {Number(p.amount).toLocaleString()} · {p.plan}
                             </p>
                             <p className="text-xs text-slate-500">
-                              {p.mpesaReceiptNo ?? "Pending"} � {p.paidAt ? format(new Date(p.paidAt), "MMM d, yyyy") : "Ò¢â�a¬â���"}
+                              {p.mpesaReceiptNo ?? "Pending"} � {p.paidAt ? format(new Date(p.paidAt), "MMM d, yyyy") : "Ң��a�����"}
                             </p>
                           </div>
                           <span className={`text-xs px-2.5 py-1 rounded-full font-medium w-fit ${
@@ -744,7 +744,7 @@ function IntakeFormView({ form }: { form: any }) {
   return (
     <div className="mt-3 bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-4">
       <p className="text-xs font-semibold text-blue-800 flex items-center gap-1.5">
-        Ò°�&¸â���â��¹ Patient Intake Form
+        Ұ�&��������� Patient Intake Form
         <span className="text-blue-400 font-normal ml-1">
           Submitted {new Date(form.createdAt).toLocaleDateString("en-KE", { dateStyle: "medium" })}
         </span>
@@ -779,7 +779,7 @@ function IntakeFormView({ form }: { form: any }) {
           <div className="flex flex-wrap gap-1.5">
             {form.allergies.map((a: string) => (
               <span key={a} className="text-xs bg-white border border-amber-200 text-amber-700 px-2 py-0.5 rounded-full">
-                Ò¢�&¡�  {a}
+                Ң�&��� {a}
               </span>
             ))}
           </div>
