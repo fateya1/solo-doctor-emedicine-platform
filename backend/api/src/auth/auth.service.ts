@@ -60,7 +60,7 @@ export class AuthService {
 
   async login(dto: { email: string; password: string; tenantId?: string }, ipAddress?: string, userAgent?: string) {
     const email = dto.email.toLowerCase().trim();
-    const user = await this.prisma.user.findFirst({ where: { email, isActive: true } });
+    const user = await this.prisma.user.findFirst({ where: { email } });
 
     if (!user) {
       await this.auditService.log({
@@ -114,7 +114,7 @@ export class AuthService {
 
   async forgotPassword(email: string): Promise<{ message: string }> {
     const user = await this.prisma.user.findFirst({
-      where: { email: email.toLowerCase().trim(), isActive: true },
+      where: { email: email.toLowerCase().trim() },
     });
 
     if (!user) return { message: "If that email is registered, a reset link has been sent." };
