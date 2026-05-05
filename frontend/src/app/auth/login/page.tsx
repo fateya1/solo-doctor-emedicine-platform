@@ -21,6 +21,7 @@ export default function LoginPage() {
   const t = useT();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
 
@@ -30,6 +31,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: FormData) => {
     setError("");
+    setLoading(true);
     try {
       const res = await apiClient.post("/auth/login", {
         ...data,
@@ -53,8 +55,10 @@ export default function LoginPage() {
         router.replace("/");
       }
     } catch (err: any) {
-      const message = err.response?.data?.message || t("auth", "invalidCredentials");
-      setError(Array.isArray(message) ? message[0] : message);
+      const msg = err.response?.data?.message || "Invalid email or password. Please try again.";
+      setError(Array.isArray(msg) ? msg[0] : msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -99,10 +103,10 @@ export default function LoginPage() {
               </div>
               {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
             </div>
-            <button type="submit" disabled={isSubmitting}
+            <button type="submit" disabled={isSubmitting || loading}
               className="btn-primary w-full flex items-center justify-center gap-2">
-              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isSubmitting ? t("auth", "signingIn") : t("common", "signIn")}
+              {(isSubmitting || loading) && <Loader2 className="w-4 h-4 animate-spin" />}
+              {(isSubmitting || loading) ? t("auth", "signingIn") : t("common", "signIn")}
             </button>
           </form>
           <p className="text-center text-sm text-slate-500 mt-6">
