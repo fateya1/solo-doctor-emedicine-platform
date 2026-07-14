@@ -51,6 +51,21 @@ export default function PatientDashboard() {
     enabled: !!token && _hasHydrated,
   });
 
+  useEffect(() => {
+    if (!profile) return;
+    const skipped = typeof window !== "undefined" && localStorage.getItem("patientOnboardingSkipped") === "true";
+    const isEmpty =
+      !profile.dateOfBirth &&
+      !profile.gender &&
+      !profile.phone &&
+      !profile.address &&
+      !profile.bloodGroup &&
+      (!profile.allergies || profile.allergies.length === 0);
+    if (isEmpty && !skipped) {
+      router.push("/onboarding/patient");
+    }
+  }, [profile, router]);
+
   const { data: appointments, refetch: refetchAppointments } = useQuery({
     queryKey: ["my-appointments"],
     queryFn: () => apiClient.get("/appointments/my").then((r) => r.data),

@@ -1,0 +1,61 @@
+diff --git a/frontend/src/app/dashboard/doctor/page.tsx b/frontend/src/app/dashboard/doctor/page.tsx
+index 3185a46..d8d9af8 100644
+--- a/frontend/src/app/dashboard/doctor/page.tsx
++++ b/frontend/src/app/dashboard/doctor/page.tsx
+@@ -61,6 +61,12 @@ export default function DoctorDashboard() {
+ 
+   const doctorProfileId = profile?.id;
+ 
++  useEffect(() => {
++    if (profile && profile.onboardingComplete === false) {
++      router.push("/onboarding");
++    }
++  }, [profile, router]);
++
+   const { data: appointments } = useQuery({
+     queryKey: ["doctor-appointments"],
+     queryFn: () => apiClient.get("/appointments/doctor").then((r) => r.data),
+diff --git a/frontend/src/app/dashboard/patient/page.tsx b/frontend/src/app/dashboard/patient/page.tsx
+index 3f5001f..078c9d2 100644
+--- a/frontend/src/app/dashboard/patient/page.tsx
++++ b/frontend/src/app/dashboard/patient/page.tsx
+@@ -51,6 +51,21 @@ export default function PatientDashboard() {
+     enabled: !!token && _hasHydrated,
+   });
+ 
++  useEffect(() => {
++    if (!profile) return;
++    const skipped = typeof window !== "undefined" && localStorage.getItem("patientOnboardingSkipped") === "true";
++    const isEmpty =
++      !profile.dateOfBirth &&
++      !profile.gender &&
++      !profile.phone &&
++      !profile.address &&
++      !profile.bloodGroup &&
++      (!profile.allergies || profile.allergies.length === 0);
++    if (isEmpty && !skipped) {
++      router.push("/onboarding/patient");
++    }
++  }, [profile, router]);
++
+   const { data: appointments, refetch: refetchAppointments } = useQuery({
+     queryKey: ["my-appointments"],
+     queryFn: () => apiClient.get("/appointments/my").then((r) => r.data),
+diff --git a/frontend/src/app/onboarding/patient/page.tsx b/frontend/src/app/onboarding/patient/page.tsx
+index ee0be41..e38bd28 100644
+--- a/frontend/src/app/onboarding/patient/page.tsx
++++ b/frontend/src/app/onboarding/patient/page.tsx
+@@ -175,7 +175,12 @@ export default function PatientOnboardingPage() {
+ 
+           <div className="flex gap-3 mt-6">
+             <button
+-              onClick={() => router.push("/dashboard/patient")}
++              onClick={() => {
++                if (typeof window !== "undefined") {
++                  localStorage.setItem("patientOnboardingSkipped", "true");
++                }
++                router.push("/dashboard/patient");
++              }}
+               className="btn-secondary flex-1"
+             >
+               Skip for now

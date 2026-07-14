@@ -61,6 +61,12 @@ export default function DoctorDashboard() {
 
   const doctorProfileId = profile?.id;
 
+  useEffect(() => {
+    if (profile && profile.onboardingComplete === false) {
+      router.push("/onboarding");
+    }
+  }, [profile, router]);
+
   const { data: appointments } = useQuery({
     queryKey: ["doctor-appointments"],
     queryFn: () => apiClient.get("/appointments/doctor").then((r) => r.data),

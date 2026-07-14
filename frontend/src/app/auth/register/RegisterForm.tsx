@@ -40,7 +40,7 @@ export default function RegisterForm() {
       await apiClient.post("/auth/register", data);
       const loginRes = await apiClient.post("/auth/login", { email: data.email, password: data.password });
       setAuth(loginRes.data.accessToken, loginRes.data.user);
-      router.push(data.role === "DOCTOR" ? "/dashboard/doctor" : "/dashboard/patient");
+      router.push(data.role === "DOCTOR" ? "/onboarding" : "/onboarding/patient");
     } catch (err: any) {
       setError(err.response?.data?.message?.[0] || err.response?.data?.message || t("common", "errorGeneric"));
     }
